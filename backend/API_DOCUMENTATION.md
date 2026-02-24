@@ -1,0 +1,325 @@
+# Bingo App - Backend API Documentation
+
+## Overview
+Complete REST API for a Bingo challenge application with image submissions, 25-box boards, and leaderboards.
+
+**Base URL**: `http://localhost:8000`  
+**API Docs**: `http://localhost:8000/docs`
+
+---
+
+## 🔐 User Management
+
+### Create New User Account
+```http
+POST /api/users/register
+```
+**Request Body:**
+```json
+{
+  "email": "user@example.com",
+  "password": "securePassword123"
+}
+```
+
+### Get User by ID
+```http
+GET /api/users/{user_id}
+```
+
+---
+
+## 🎯 Activities Management
+
+### Create Activity
+```http
+POST /api/activities
+```
+**Request Body:**
+```json
+{
+  "title": "Take a selfie with a tree",
+  "description": "Find a tree and take a creative selfie",
+  "points": 10
+}
+```
+
+### Get All Activities
+```http
+GET /api/activities
+```
+
+### Get Single Activity
+```http
+GET /api/activities/{activity_id}
+```
+
+### Update Activity
+```http
+PUT /api/activities/{activity_id}
+```
+**Request Body:**
+```json
+{
+  "title": "Updated title",
+  "points": 15
+}
+```
+
+### Delete Activity
+```http
+DELETE /api/activities/{activity_id}
+```
+
+---
+
+## 📸 Submissions (Image Proof)
+
+### Submit Activity Completion
+```http
+POST /api/submissions
+```
+**Request Body:**
+```json
+{
+  "user_id": "uuid-here",
+  "activity_id": "uuid-here",
+  "image_url": "https://storage.example.com/image.jpg",
+  "status": "pending"
+}
+```
+
+### Get User's Submissions
+```http
+GET /api/submissions/user/{user_id}
+```
+
+### Get Activity's Submissions
+```http
+GET /api/submissions/activity/{activity_id}
+```
+
+### Approve/Reject Submission
+```http
+PATCH /api/submissions/{submission_id}/status
+```
+**Request Body:**
+```json
+{
+  "status": "approved"  // or "rejected" or "pending"
+}
+```
+
+---
+
+## 🎲 Bingo Boards (25 Boxes)
+
+### Create Bingo Board
+```http
+POST /api/boards
+```
+**Request Body:**
+```json
+{
+  "title": "Summer Challenge 2026",
+  "description": "Complete all 25 summer activities!",
+  "activity_ids": [
+    "uuid1", "uuid2", "uuid3", ..., "uuid25"
+  ]
+}
+```
+**Note:** Must provide exactly 25 activity IDs
+
+### Get All Boards
+```http
+GET /api/boards?active_only=true
+```
+
+### Get Board with Activities
+```http
+GET /api/boards/{board_id}
+```
+**Response includes activities in order (positions 0-24)**
+
+### Get User Progress on Board
+```http
+GET /api/boards/{board_id}/progress/{user_id}
+```
+**Response:**
+```json
+{
+  "board_id": "uuid",
+  "board_title": "Summer Challenge 2026",
+  "total_activities": 25,
+  "completed_activities": 8,
+  "total_points": 120,
+  "completed_positions": [0, 3, 5, 7, 12, 15, 18, 22]
+}
+```
+
+### Mark Activity Complete on Board
+```http
+POST /api/boards/{board_id}/complete?user_id={user_id}&activity_id={activity_id}&submission_id={submission_id}
+```
+**Requirements:**
+- Submission must exist and be approved
+- Links user's approved submission to board progress
+
+### Activate/Deactivate Board
+```http
+PATCH /api/boards/{board_id}?is_active=false
+```
+
+---
+
+## 🏆 Leaderboard & Statistics
+
+### Get Top 5 Winners
+```http
+GET /api/leaderboard/top?limit=5
+```
+**Response:**
+```json
+[
+  {
+    "user_id": "uuid",
+    "email": "user@example.com",
+    "total_points": 450,
+    "completed_activities": 32,
+    "rank": 1
+  },
+  ...
+]
+```
+
+### Get Board-Specific Leaderboard
+```http
+GET /api/leaderboard/board/{board_id}?limit=5
+```
+
+### Get User Statistics
+```http
+GET /api/stats/user/{user_id}
+```
+**Response:**
+```json
+{
+  "user_id": "uuid",
+  "email": "user@example.com",
+  "total_points": 280,
+  "completed_activities": 18,
+  "approved_submissions": 18,
+  "pending_submissions": 3,
+  "rejected_submissions": 2
+}
+```
+
+### Get Global Statistics
+```http
+GET /api/stats/global
+```
+**Response:**
+```json
+{
+  "total_users": 156,
+  "total_activities": 50,
+  "total_boards": 3,
+  "active_boards": 2,
+  "total_submissions": 523,
+  "approved_submissions": 412,
+  "pending_submissions": 111
+}
+```
+
+---
+
+## 🔄 Typical Workflow
+
+### 1. User Registration
+```
+POST /api/users/register
+→ User creates account
+```
+
+### 2. Admin Creates Activities
+```
+POST /api/activities (x25)
+→ Create 25 different activities
+```
+
+### 3. Admin Creates Bingo Board
+```
+POST /api/boards
+→ Link the 25 activities to a board
+```
+
+### 4. User Completes Activity
+```
+1. User uploads image to storage (Supabase Storage, Cloudinary, etc.)
+2. POST /api/submissions (with image_url)
+3. Admin reviews: PATCH /api/submissions/{id}/status → "approved"
+4. POST /api/boards/{board_id}/complete
+   → Links approved submission to board progress
+```
+
+### 5. View Leaderboard
+```
+GET /api/leaderboard/top
+→ See top 5 winners
+```
+
+---
+
+## 📊 Database Schema Summary
+
+### Existing Tables (Supabase)
+- `profiles` - User accounts
+- `activities` - Individual challenges
+- `submissions` - User proof submissions
+
+### New Tables (Run migration.sql)
+- `bingo_boards` - 25-activity boards
+- `bingo_board_activities` - Activity positions on boards
+- `user_board_progress` - User completion tracking
+
+---
+
+## 🚀 Quick Start
+
+1. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+2. **Set up environment:**
+   Create `.env` file with your Supabase credentials
+
+3. **Run database migration:**
+   Execute `database_migration.sql` in Supabase SQL Editor
+
+4. **Start server:**
+   ```bash
+   python -m uvicorn app.main:app --reload
+   ```
+
+5. **Access API docs:**
+   Visit `http://localhost:8000/docs`
+
+---
+
+## 🎨 Frontend Integration Tips
+
+- All IDs are UUIDs, not integers
+- Timestamp fields use ISO 8601 format
+- Image URLs should be stored after uploading to cloud storage
+- Use completed_positions array to highlight completed squares on bingo board
+- Status values: "pending", "approved", "rejected"
+
+---
+
+## ⚠️ Important Notes
+
+- Bingo boards require exactly 25 activities
+- Users can only complete each activity once per board
+- Submissions must be approved before counting toward board progress
+- Default leaderboard shows top 5, but customizable with `?limit=` parameter
