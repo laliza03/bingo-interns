@@ -1,42 +1,43 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
-from app.models.user import Profile, UserCreate, UserResponse
+from app.models.user import Profile, UserSync, UserResponse
 from app.db.connection import get_session
 import uuid as uuid_pkg
 
 router = APIRouter()
 
 
-@router.post("/users/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-def create_user(user_data: UserCreate, session: Session = Depends(get_session)):
+@router.post("/users/sync", response_model=UserResponse, status_code=status.HTTP_200_OK)
+def sync_user_profile(user_data: UserSync, session: Session = Depends(get_session)):
     """
-    Create a new user account.
-    
-    Checks if the email already exists before creating the account.
+    Ensure a profile row exists for a Supabase-authenticated user.
+
+    This endpoint is intended to be called after Supabase sign-up/sign-in so
+    backend tables that reference profiles.id continue to work.
     """
-    # Check if user with this email already exists
-    statement = select(Profile).where(Profile.email == user_data.email)
-    existing_user = session.exec(statement).first()
-    
-    if existing_user:
+    existing_by_id = session.get(Profile, user_data.id)
+    if existing_by_id:
+        if existing_by_id.email != user_data.email:
+            existing_by_id.email = user_data.email
+            session.add(existing_by_id)
+            session.commit()
+            session.refresh(existing_by_id)
+        return existing_by_id
+
+    existing_by_email = session.exec(
+        select(Profile).where(Profile.email == user_data.email)
+    ).first()
+    if existing_by_email and existing_by_email.id != user_data.id:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered"
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Email already exists for another profile",
         )
-    
-    # Create new user
-    new_user = Profile(
-        email=user_data.email,
-        password=""  # Temporary, will be set by set_password
-    )
-    new_user.set_password(user_data.password)
-    
-    # Save to database
-    session.add(new_user)
+
+    new_profile = Profile(id=user_data.id, email=user_data.email)
+    session.add(new_profile)
     session.commit()
-    session.refresh(new_user)
-    
-    return new_user
+    session.refresh(new_profile)
+    return new_profile
 
 
 @router.get("/users/{user_id}", response_model=UserResponse)

@@ -1,75 +1,94 @@
 /**
  * lib/api/auth.ts
+ *
+ * Auth functions powered by Supabase Auth.
+ * No more manual localStorage or custom backend /login endpoints.
  */
 
+import { supabase } from "@/lib/supabaseClient";
 import type { User } from "@/types";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api";
 
-export function getAuthToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem("auth_token");
+/** Map a Supabase user object to our app's User shape */
+function toAppUser(su: SupabaseUser): User {
+  return {
+    id: su.id,
+    email: su.email ?? "",
+  };
 }
 
-export function getUserId(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem("user_id");
+function requireClient() {
+  if (!supabase) throw new Error("Supabase client is not configured");
+  return supabase;
+}
+
+async function syncProfileToBackend(user: User): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/users/sync`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id: user.id, email: user.email }),
+  });
+
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({}));
+    const message =
+      payload?.detail ?? "Authenticated, but failed to sync user profile";
+    throw new Error(message);
+  }
 }
 
 export async function registerUser(
   email: string,
   password: string,
 ): Promise<User> {
-  const response = await fetch(`${API_BASE_URL}/users/register`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
-  });
+  const client = requireClient();
+  const { data, error } = await client.auth.signUp({ email, password });
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || "Registration failed");
-  }
+  if (error) throw new Error(error.message);
+  if (!data.user) throw new Error("Registration failed — no user returned");
 
-  const user: User = await response.json();
-  if (typeof window !== "undefined") {
-    localStorage.setItem("auth_token", user.id);
-    localStorage.setItem("user_id", user.id);
-    localStorage.setItem("user_email", user.email);
-  }
+  const user = toAppUser(data.user);
+  await syncProfileToBackend(user);
   return user;
 }
 
-// TODO: replace with a dedicated /login endpoint when available
 export async function loginUser(
   email: string,
   password: string,
 ): Promise<User> {
-  const response = await fetch(`${API_BASE_URL}/users/register`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
+  const client = requireClient();
+  const { data, error } = await client.auth.signInWithPassword({
+    email,
+    password,
   });
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || "Login failed");
-  }
+  if (error) throw new Error(error.message);
+  if (!data.user) throw new Error("Login failed — no user returned");
 
-  const user: User = await response.json();
-  if (typeof window !== "undefined") {
-    localStorage.setItem("auth_token", user.id);
-    localStorage.setItem("user_id", user.id);
-    localStorage.setItem("user_email", user.email);
-  }
+  const user = toAppUser(data.user);
+  await syncProfileToBackend(user);
   return user;
 }
 
-export function logoutUser(): void {
-  if (typeof window !== "undefined") {
-    localStorage.removeItem("auth_token");
-    localStorage.removeItem("user_id");
-    localStorage.removeItem("user_email");
-  }
+export async function logoutUser(): Promise<void> {
+  const client = requireClient();
+  const { error } = await client.auth.signOut();
+  if (error) throw new Error(error.message);
+}
+
+/** Get the current session's access token (for backend API calls) */
+export async function getAuthToken(): Promise<string | null> {
+  const client = requireClient();
+  const { data } = await client.auth.getSession();
+  return data.session?.access_token ?? null;
+}
+
+/** Get the current user's ID from the active session */
+export async function getUserId(): Promise<string | null> {
+  const client = requireClient();
+  const { data } = await client.auth.getUser();
+  return data.user?.id ?? null;
 }

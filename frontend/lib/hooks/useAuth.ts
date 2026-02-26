@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { getUserId, registerUser, loginUser, logoutUser } from "@/lib/api";
+import { supabase } from "@/lib/supabaseClient";
+import { registerUser, loginUser, logoutUser } from "@/lib/api";
 import type { User } from "@/types";
 
 interface AuthState {
@@ -17,14 +18,35 @@ export function useAuth(): AuthState {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  // On mount: read current Supabase session & subscribe to auth changes
   useEffect(() => {
-    const userId = getUserId();
-    const userEmail =
-      typeof window !== "undefined" ? localStorage.getItem("user_email") : null;
-    if (userId && userEmail) {
-      setUser({ id: userId, email: userEmail });
+    if (!supabase) {
+      setLoading(false);
+      return;
     }
-    setLoading(false);
+
+    // Get the current user once
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) {
+        setUser({ id: data.user.id, email: data.user.email ?? "" });
+      }
+      setLoading(false);
+    });
+
+    // Listen for sign-in / sign-out / token refresh
+    const { data: subscription } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (session?.user) {
+          setUser({ id: session.user.id, email: session.user.email ?? "" });
+        } else {
+          setUser(null);
+        }
+      },
+    );
+
+    return () => {
+      subscription.subscription.unsubscribe();
+    };
   }, []);
 
   const register = async (email: string, password: string): Promise<User> => {
@@ -60,8 +82,12 @@ export function useAuth(): AuthState {
     }
   };
 
-  const logout = (): void => {
-    logoutUser();
+  const logout = async (): Promise<void> => {
+    try {
+      await logoutUser();
+    } catch {
+      // best-effort
+    }
     setUser(null);
   };
 
