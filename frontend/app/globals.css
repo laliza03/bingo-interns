@@ -374,10 +374,69 @@ input:focus {
   transform: translateY(-1px);
 }
 
+.main-dual-panels {
+  width: min(100%, 1280px);
+  margin: 24px auto 96px;
+  padding: 0 18px;
+  display: grid;
+  grid-template-columns: minmax(680px, 1.2fr) minmax(300px, 0.5fr);
+  gap: 34px;
+  align-items: start;
+  transform: translateX(-10px);
+}
+
+.main-dual-panels .board-card-main,
+.main-dual-panels .leaderboard-card {
+  width: 100%;
+}
+
+.main-dual-panels .leaderboard-card {
+  padding: 14px;
+  max-width: 430px;
+  justify-self: end;
+}
+
+.progress-pill-compact {
+  font-size: 20px;
+  padding: 6px 12px;
+}
+
+.main-nav-toggle-btn {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 3;
+  min-width: 170px;
+  box-shadow: var(--shadow);
+}
+
+.main-nav-toggle-btn:hover {
+  transform: translateY(-1px);
+}
+
 @media (max-width: 640px) {
   .main-signout-btn {
     left: 12px;
     bottom: 12px;
+  }
+
+  .main-nav-toggle-btn {
+    right: 12px;
+    bottom: 12px;
+    min-width: 160px;
+  }
+}
+
+@media (max-width: 1180px) {
+  .main-dual-panels {
+    grid-template-columns: 1fr;
+    transform: none;
+    margin-bottom: 110px;
+  }
+
+  .main-dual-panels .leaderboard-card {
+    max-width: none;
+    justify-self: stretch;
   }
 }
 

@@ -5,18 +5,18 @@ import { useEffect } from "react";
 import { useAuth } from "../lib/hooks";
 
 export default function HomePage() {
-  const { user, loading } = useAuth(); // Get user and loading state from your auth hook
+  const { user, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     if (!loading && !user) {
-      router.replace("/login"); // Redirect to login if not authenticated
+      router.replace("/login");
     } else {
-      router.replace("/board"); // Redirect to board if authenticated
+      router.replace("/board");
     }
   }, [loading, user, router]);
 
   if (loading) {
-    return <div>Loading...</div>; // Show a loading state while checking auth
+    return <div>Loading...</div>;
   }
 }

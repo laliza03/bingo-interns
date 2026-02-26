@@ -17,7 +17,7 @@ export default function BingoBoard() {
 
   const completedActivityIds = useMemo<Set<string>>(
     () => new Set(submissions?.map((s) => s.activity_id) ?? []),
-    [submissions]
+    [submissions],
   );
 
   const completedCount = completedActivityIds.size;
@@ -35,13 +35,15 @@ export default function BingoBoard() {
   };
 
   return (
-    <section className="board-card">
+    <section className="board-card board-card-main">
       <div className="board-header">
         <div>
           <p className="eyebrow">GLOW BINGO</p>
           <h2>My Activity Board</h2>
         </div>
-        <div className="progress-pill">{completedCount}/25 complete</div>
+        <div className="progress-pill progress-pill-compact">
+          {completedCount}/25 complete
+        </div>
       </div>
 
       {error && <p className="form-error">{error}</p>}
