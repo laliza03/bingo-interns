@@ -10,26 +10,22 @@ interface MainLayoutProps {
 }
 
 export default function MainLayout({ children }: MainLayoutProps) {
-  const { user, loading } = useAuth(); // Assuming useAuth provides user and loading state
+  const { user, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     if (!loading && !user) {
-      router.replace("/login"); // Redirect to login if not authenticated
+      router.replace("/login");
     }
   }, [loading, user, router]);
 
   if (loading) {
-    return <div>Loading...</div>; // Show a loading state while checking auth
+    return <div>Loading...</div>;
   }
 
   if (!user) {
-    return null; // Prevent rendering if user is not authenticated
+    return null;
   }
 
-  return (
-    <div className="main-layout">
-      {children}
-    </div>
-  );
+  return <>{children}</>;
 }
