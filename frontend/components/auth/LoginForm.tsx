@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/hooks";
+import PasswordInput from "@/components/ui/PasswordInput";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -37,12 +38,10 @@ export default function LoginForm() {
       />
 
       <label htmlFor="login-password">Password</label>
-      <input
+      <PasswordInput
         id="login-password"
-        type="password"
         placeholder="Enter password"
         autoComplete="current-password"
-        required
         value={password}
         onChange={(e) => setPassword(e.target.value)}
       />
@@ -61,4 +60,3 @@ export default function LoginForm() {
     </form>
   );
 }
-

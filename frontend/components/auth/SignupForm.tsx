@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/hooks";
+import PasswordInput from "@/components/ui/PasswordInput";
 
 export default function SignupForm() {
   const router = useRouter();
@@ -10,9 +11,16 @@ export default function SignupForm() {
 
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+  const [confirmPassword, setConfirmPassword] = useState<string>("");
+  const [matchError, setMatchError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (password !== confirmPassword) {
+      setMatchError("Passwords do not match.");
+      return;
+    }
+    setMatchError(null);
     try {
       await register(email, password);
       router.push("/board");
@@ -23,7 +31,9 @@ export default function SignupForm() {
 
   return (
     <form className="login-form" onSubmit={handleSubmit}>
-      {error && <p className="form-error">{error}</p>}
+      {(error || matchError) && (
+        <p className="form-error">{matchError ?? error}</p>
+      )}
 
       <label htmlFor="signup-email">Email</label>
       <input
@@ -37,14 +47,24 @@ export default function SignupForm() {
       />
 
       <label htmlFor="signup-password">Password</label>
-      <input
+      <PasswordInput
         id="signup-password"
-        type="password"
         placeholder="Create a password"
         autoComplete="new-password"
-        required
         value={password}
         onChange={(e) => setPassword(e.target.value)}
+      />
+
+      <label htmlFor="signup-confirm-password">Confirm Password</label>
+      <PasswordInput
+        id="signup-confirm-password"
+        placeholder="Re-enter your password"
+        autoComplete="new-password"
+        value={confirmPassword}
+        onChange={(e) => {
+          setConfirmPassword(e.target.value);
+          if (matchError) setMatchError(null);
+        }}
       />
 
       <button className="btn btn-primary" type="submit" disabled={loading}>
@@ -61,4 +81,3 @@ export default function SignupForm() {
     </form>
   );
 }
-
