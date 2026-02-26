@@ -10,7 +10,7 @@ interface MainLayoutProps {
 }
 
 export default function MainLayout({ children }: MainLayoutProps) {
-  const { user, loading } = useAuth();
+  const { user, loading, logout } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -27,5 +27,19 @@ export default function MainLayout({ children }: MainLayoutProps) {
     return null;
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <button
+        type="button"
+        className="btn btn-primary main-signout-btn"
+        onClick={async () => {
+          await logout();
+          router.replace("/login");
+        }}
+      >
+        Sign out
+      </button>
+    </>
+  );
 }

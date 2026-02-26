@@ -361,6 +361,26 @@ input:focus {
   color: var(--ink);
 }
 
+.main-signout-btn {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  z-index: 3;
+  min-width: 116px;
+  box-shadow: 0 10px 24px rgba(242, 155, 115, 0.2);
+}
+
+.main-signout-btn:hover {
+  transform: translateY(-1px);
+}
+
+@media (max-width: 640px) {
+  .main-signout-btn {
+    left: 12px;
+    bottom: 12px;
+  }
+}
+
 /* ─── Leaderboard ─────────────────────────────────────── */
 .leaderboard-card {
   width: min(100%, 660px);
