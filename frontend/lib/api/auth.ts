@@ -51,7 +51,7 @@ export async function registerUser(
   if (!data.user) throw new Error("Registration failed — no user returned");
 
   const user = toAppUser(data.user);
-  await syncProfileToBackend(user);
+  //   await syncProfileToBackend(user);
   return user;
 }
 
@@ -69,7 +69,7 @@ export async function loginUser(
   if (!data.user) throw new Error("Login failed — no user returned");
 
   const user = toAppUser(data.user);
-  await syncProfileToBackend(user);
+  //   await syncProfileToBackend(user);
   return user;
 }
 
