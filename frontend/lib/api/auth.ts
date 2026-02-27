@@ -9,8 +9,7 @@ import { supabase } from "@/lib/supabaseClient";
 import type { User } from "@/types";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api";
 
 /** Map a Supabase user object to our app's User shape */
 function toAppUser(su: SupabaseUser): User {
@@ -34,16 +33,12 @@ async function syncProfileToBackend(user: User): Promise<void> {
 
   if (!response.ok) {
     const payload = await response.json().catch(() => ({}));
-    const message =
-      payload?.detail ?? "Authenticated, but failed to sync user profile";
+    const message = payload?.detail ?? "Authenticated, but failed to sync user profile";
     throw new Error(message);
   }
 }
 
-export async function registerUser(
-  email: string,
-  password: string,
-): Promise<User> {
+export async function registerUser(email: string, password: string): Promise<User> {
   const client = requireClient();
   const { data, error } = await client.auth.signUp({ email, password });
 
@@ -55,10 +50,7 @@ export async function registerUser(
   return user;
 }
 
-export async function loginUser(
-  email: string,
-  password: string,
-): Promise<User> {
+export async function loginUser(email: string, password: string): Promise<User> {
   const client = requireClient();
   const { data, error } = await client.auth.signInWithPassword({
     email,
@@ -76,6 +68,22 @@ export async function loginUser(
 export async function logoutUser(): Promise<void> {
   const client = requireClient();
   const { error } = await client.auth.signOut();
+  if (error) throw new Error(error.message);
+}
+
+/** Send a password-reset email via Supabase */
+export async function resetPassword(email: string): Promise<void> {
+  const client = requireClient();
+  const { error } = await client.auth.resetPasswordForEmail(email, {
+    redirectTo: `${window.location.origin}/reset-password`,
+  });
+  if (error) throw new Error(error.message);
+}
+
+/** Update the user's password (called after clicking the reset link) */
+export async function updatePassword(newPassword: string): Promise<void> {
+  const client = requireClient();
+  const { error } = await client.auth.updateUser({ password: newPassword });
   if (error) throw new Error(error.message);
 }
 

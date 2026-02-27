@@ -1,15 +1,17 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { registerUser, loginUser, logoutUser } from "@/lib/api";
+import { registerUser, loginUser, logoutUser, resetPassword as resetPasswordApi } from "@/lib/api";
 import type { User } from "@/types";
 
 interface AuthState {
   user: User | null;
   loading: boolean;
   error: string | null;
+  successMessage: string | null;
   register: (email: string, password: string) => Promise<User>;
   login: (email: string, password: string) => Promise<User>;
   logout: () => void;
+  resetPassword: (email: string) => Promise<void>;
   isLoggedIn: boolean;
 }
 
@@ -17,6 +19,7 @@ export function useAuth(): AuthState {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // On mount: read current Supabase session & subscribe to auth changes
   useEffect(() => {
@@ -34,15 +37,13 @@ export function useAuth(): AuthState {
     });
 
     // Listen for sign-in / sign-out / token refresh
-    const { data: subscription } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        if (session?.user) {
-          setUser({ id: session.user.id, email: session.user.email ?? "" });
-        } else {
-          setUser(null);
-        }
-      },
-    );
+    const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setUser({ id: session.user.id, email: session.user.email ?? "" });
+      } else {
+        setUser(null);
+      }
+    });
 
     return () => {
       subscription.subscription.unsubscribe();
@@ -57,8 +58,7 @@ export function useAuth(): AuthState {
       setUser(newUser);
       return newUser;
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Registration failed";
+      const message = err instanceof Error ? err.message : "Registration failed";
       setError(message);
       throw err;
     } finally {
@@ -82,6 +82,22 @@ export function useAuth(): AuthState {
     }
   };
 
+  const resetPassword = async (email: string): Promise<void> => {
+    setLoading(true);
+    setError(null);
+    setSuccessMessage(null);
+    try {
+      await resetPasswordApi(email);
+      setSuccessMessage("Password reset email sent! Check your inbox.");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to send reset email";
+      setError(message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const logout = async (): Promise<void> => {
     try {
       await logoutUser();
@@ -91,5 +107,5 @@ export function useAuth(): AuthState {
     setUser(null);
   };
 
-  return { user, loading, error, register, login, logout, isLoggedIn: !!user };
+  return { user, loading, error, successMessage, register, login, logout, resetPassword, isLoggedIn: !!user };
 }

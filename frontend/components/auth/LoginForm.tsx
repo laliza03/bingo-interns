@@ -7,7 +7,7 @@ import PasswordInput from "@/components/ui/PasswordInput";
 
 export default function LoginForm() {
   const router = useRouter();
-  const { login, loading, error } = useAuth();
+  const { login, resetPassword, loading, error, successMessage } = useAuth();
 
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
@@ -22,9 +22,21 @@ export default function LoginForm() {
     }
   };
 
+  const handleResetPassword = async () => {
+    if (!email) {
+      return;
+    }
+    try {
+      await resetPassword(email);
+    } catch {
+      // error is already captured in the hook
+    }
+  };
+
   return (
     <form className="login-form" onSubmit={handleSubmit}>
       {error && <p className="form-error">{error}</p>}
+      {successMessage && <p className="form-success">{successMessage}</p>}
 
       <label htmlFor="login-email">Email</label>
       <input
@@ -48,6 +60,15 @@ export default function LoginForm() {
 
       <button className="btn btn-primary" type="submit" disabled={loading}>
         {loading ? "Signing in…" : "Sign in"}
+      </button>
+
+      <button
+        className="btn btn-link"
+        type="button"
+        disabled={loading}
+        onClick={handleResetPassword}
+      >
+        Forgot password?
       </button>
 
       <button
