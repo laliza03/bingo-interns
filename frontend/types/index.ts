@@ -27,17 +27,3 @@ export interface Submission {
   status?: "pending" | "approved" | "rejected";
   created_at?: string;
 }
-
-export interface Board {
-  id: string;
-  title: string;
-  description?: string;
-  activities?: Activity[];
-}
-
-export interface BoardProgress {
-  user_id: string;
-  board_id: string;
-  completed_count: number;
-  submissions: Submission[];
-}

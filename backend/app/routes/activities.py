@@ -37,10 +37,29 @@ def create_activity(activity_data: ActivityCreate, session: Session = Depends(ge
 
 @router.get("/activities", response_model=List[ActivityResponse])
 def get_activities(session: Session = Depends(get_session)):
-    """Get all activities"""
-    statement = select(Activity)
-    activities = session.exec(statement).all()
-    return activities
+    """
+    Get up to 25 activities with unique index values (0-24).
+    When multiple activities share the same index, the most recently
+    created one wins. Activities with no index (None) are ignored.
+    """
+    statement = select(Activity).order_by(Activity.created_at.desc())
+    all_activities = session.exec(statement).all()
+
+    seen_indexes: set[int] = set()
+    unique_activities: list[Activity] = []
+
+    for activity in all_activities:
+        if activity.index is None:
+            continue
+        if activity.index in seen_indexes:
+            continue
+        seen_indexes.add(activity.index)
+        unique_activities.append(activity)
+        if len(unique_activities) == 25:
+            break
+
+    unique_activities.sort(key=lambda a: a.index)
+    return unique_activities
 
 
 @router.get("/activities/{activity_id}", response_model=ActivityResponse)

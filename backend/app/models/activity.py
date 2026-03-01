@@ -11,8 +11,8 @@ class Activity(SQLModel, table=True):
     created_at: Optional[datetime] = Field(default_factory=datetime.utcnow)
     title: str
     description: str
-    points: int
-
+    isImageRequired: bool = False
+    index: Optional[int] = None
 
 class ActivityCreate(SQLModel):
     title: str

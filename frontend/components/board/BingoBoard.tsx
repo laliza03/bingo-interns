@@ -17,13 +17,15 @@ export default function BingoBoard() {
 
   const [error, setError] = useState<string | null>(null);
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
-
+  const activities = useMemo(() => FALLBACK_TASKS, []);
   // Auto-dismiss error toast after 4 seconds
   useEffect(() => {
     if (!error) return;
     const timer = setTimeout(() => setError(null), 4000);
     return () => clearTimeout(timer);
   }, [error]);
+
+  useEffect(() => {}, [submissions]);
 
   const completedActivityIds = useMemo<Set<string>>(
     () => new Set(submissions?.map((s) => s.activity_id) ?? []),
