@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { useSubmitActivity, useUserSubmissions, useAuth } from "@/lib/hooks";
+import { useSubmitActivity, useUserSubmissions, useAuth, useActivities } from "@/lib/hooks";
 import { FALLBACK_TASKS } from "@/constants/tasks";
 import BingoCell from "./BingoCell";
 import ActivityModal from "./ActivityModal";
@@ -14,18 +14,22 @@ export default function BingoBoard() {
 
   const { submit: submitActivity, loading: submitting } = useSubmitActivity();
   const { submissions } = useUserSubmissions(demoUser?.id);
+  const { activities, loading: activitiesLoading, error: activitiesError } = useActivities();
 
+  const displayActivities = activities.length > 0 ? activities : FALLBACK_TASKS;
   const [error, setError] = useState<string | null>(null);
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
-  const activities = useMemo(() => FALLBACK_TASKS, []);
+
+  useEffect(() => {
+    if (activitiesError) setError(activitiesError);
+  }, [activitiesError]);
+
   // Auto-dismiss error toast after 4 seconds
   useEffect(() => {
     if (!error) return;
     const timer = setTimeout(() => setError(null), 4000);
     return () => clearTimeout(timer);
   }, [error]);
-
-  useEffect(() => {}, [submissions]);
 
   const completedActivityIds = useMemo<Set<string>>(
     () => new Set(submissions?.map((s) => s.activity_id) ?? []),
@@ -64,21 +68,24 @@ export default function BingoBoard() {
         <div className="progress-pill progress-pill-compact">{completedCount}/25 complete</div>
       </div>
 
-      <div className="board-grid">
-        {FALLBACK_TASKS.map((activity) => {
-          const done = completedActivityIds.has(activity.id);
-
-          return (
-            <BingoCell
-              key={activity.id}
-              activity={activity}
-              done={done}
-              disabled={submitting}
-              onClick={() => setSelectedActivity(activity)}
-            />
-          );
-        })}
-      </div>
+      {activitiesLoading ? (
+        <div className="board-grid-loading">Loading activities...</div>
+      ) : (
+        <div className="board-grid">
+          {displayActivities.map((activity) => {
+            const done = completedActivityIds.has(activity.id);
+            return (
+              <BingoCell
+                key={activity.id}
+                activity={activity}
+                done={done}
+                disabled={submitting}
+                onClick={() => setSelectedActivity(activity)}
+              />
+            );
+          })}
+        </div>
+      )}
 
       <div style={{ marginTop: "16px", textAlign: "center" }}></div>
 
