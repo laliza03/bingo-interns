@@ -138,6 +138,54 @@ body {
   margin: 0;
 }
 
+/* ─── Toast popup ─────────────────────────────────────── */
+.toast-error {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  background: #dc2626;
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 8px 24px rgba(220, 38, 38, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  animation: toast-slide-in 0.35s ease;
+  max-width: min(90vw, 480px);
+}
+
+.toast-close {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  opacity: 0.8;
+}
+
+.toast-close:hover {
+  opacity: 1;
+}
+
+@keyframes toast-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
 label {
   font-size: 14px;
   font-weight: 500;
@@ -229,7 +277,7 @@ input:focus {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 10px;
+  margin-bottom: 24px;
 }
 
 .board-header h2 {
@@ -253,47 +301,72 @@ input:focus {
 .board-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 10px;
+  grid-template-rows: repeat(5, 1fr);
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  flex: 1;
 }
 
 .board-cell {
+  position: relative;
   min-height: 96px;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 0;
   background: #ffffff;
   padding: 12px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  transition: transform 0.14s ease, box-shadow 0.14s ease, border-color 0.12s ease;
-  box-shadow: var(--cell-shadow);
+  justify-content: center;
+  align-items: center;
+  transition: none;
+  box-shadow: none;
+  cursor: pointer;
+  margin: -0.5px;
 }
 
 .board-cell:hover {
-  transform: translateY(-4px) scale(1.01);
-  border-color: #f4c4b0;
-  box-shadow: 0 12px 28px rgba(46, 40, 40, 0.08);
+  z-index: 1;
+}
+
+.board-cell:hover .cell-hover-overlay {
+  opacity: 1;
 }
 
 .board-cell.completed {
   background: linear-gradient(180deg, #fff6ef, #fff3ea);
-  border-color: #f1b391;
 }
 
-.status-pill {
-  display: inline-flex;
+.board-cell.completed:hover .cell-hover-overlay {
+  opacity: 1;
+}
+
+.cell-hover-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  justify-content: center;
   align-items: center;
-  gap: 8px;
-  font-weight: 700;
-  font-size: 13px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.7);
-  border: 1px solid rgba(0, 0, 0, 0.04);
+  opacity: 0;
+  transition: opacity 0.45s ease;
+  pointer-events: none;
+  z-index: 2;
 }
 
-.status-pill.done {
-  background: linear-gradient(90deg, rgba(242, 155, 115, 0.12), rgba(247, 169, 131, 0.12));
+.cell-hover-overlay span {
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.cell-done-label {
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 700;
   color: var(--accent-strong);
 }
 
@@ -388,12 +461,15 @@ input:focus {
   color: var(--ink);
 }
 
+.main-signout-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 24px 0 32px;
+}
+
 .main-signout-btn {
-  position: fixed;
-  left: 16px;
-  bottom: 16px;
-  z-index: 3;
-  min-width: 116px;
+  min-width: 140px;
   box-shadow: 0 10px 24px rgba(242, 155, 115, 0.2);
 }
 
@@ -403,13 +479,12 @@ input:focus {
 
 .main-dual-panels {
   width: min(100%, 1280px);
-  margin: 24px auto 96px;
+  margin: 24px auto 0;
   padding: 0 18px;
   display: grid;
   grid-template-columns: minmax(680px, 1.2fr) minmax(300px, 0.5fr);
   gap: 34px;
-  align-items: start;
-  transform: translateX(-10px);
+  align-items: stretch;
 }
 
 .main-dual-panels .board-card-main,
@@ -417,10 +492,17 @@ input:focus {
   width: 100%;
 }
 
+.main-dual-panels .board-card-main {
+  display: flex;
+  flex-direction: column;
+}
+
 .main-dual-panels .leaderboard-card {
   padding: 14px;
   max-width: 430px;
   justify-self: end;
+  display: flex;
+  flex-direction: column;
 }
 
 .progress-pill-compact {
@@ -442,11 +524,6 @@ input:focus {
 }
 
 @media (max-width: 640px) {
-  .main-signout-btn {
-    left: 12px;
-    bottom: 12px;
-  }
-
   .main-nav-toggle-btn {
     right: 12px;
     bottom: 12px;
@@ -457,8 +534,7 @@ input:focus {
 @media (max-width: 1180px) {
   .main-dual-panels {
     grid-template-columns: 1fr;
-    transform: none;
-    margin-bottom: 110px;
+    margin-bottom: 0;
   }
 
   .main-dual-panels .leaderboard-card {
@@ -471,6 +547,10 @@ input:focus {
 .leaderboard-card {
   width: min(100%, 660px);
   padding: 18px 20px 24px;
+}
+
+.lb-list {
+  flex: 1;
 }
 
 /* Podium */

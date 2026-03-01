@@ -93,7 +93,7 @@ const RANK_CLASS: Record<number, string> = {
 export default function Leaderboard() {
   const { user } = useAuth();
 
-  const sorted = [...DUMMY_DATA].sort((a, b) => b.completed - a.completed);
+  const sorted = [...DUMMY_DATA].slice(0, 5).sort((a, b) => b.completed - a.completed);
 
   return (
     <section className="board-card leaderboard-card">
@@ -103,7 +103,7 @@ export default function Leaderboard() {
           <p className="eyebrow">GLOW BINGO</p>
           <h2>Leaderboard</h2>
         </div>
-        <div className="progress-pill">{sorted.length} interns</div>
+        <div className="progress-pill">{DUMMY_DATA.length} interns</div>
       </div>
 
       {/* Top 3 Podium */}
@@ -113,10 +113,7 @@ export default function Leaderboard() {
           const pct = Math.round((entry.completed / entry.total) * 100);
           const isMe = entry.email === user?.email;
           return (
-            <div
-              key={entry.id}
-              className={`podium-card podium-${rank}${isMe ? " is-me" : ""}`}
-            >
+            <div key={entry.id} className={`podium-card podium-${rank}${isMe ? " is-me" : ""}`}>
               <span className="podium-medal">{MEDAL[rank]}</span>
               <p className="podium-name">
                 {entry.name}
@@ -140,14 +137,9 @@ export default function Leaderboard() {
           const pct = Math.round((entry.completed / entry.total) * 100);
           const isMe = entry.email === user?.email;
           return (
-            <div
-              key={entry.id}
-              className={`lb-row${isMe ? " is-me" : ""}${rank <= 3 ? " lb-row-top" : ""}`}
-            >
+            <div key={entry.id} className={`lb-row${isMe ? " is-me" : ""}${rank <= 3 ? " lb-row-top" : ""}`}>
               {/* Rank badge */}
-              <span className={`lb-rank ${RANK_CLASS[rank] ?? ""}`}>
-                {rank <= 3 ? MEDAL[rank] : rank}
-              </span>
+              <span className={`lb-rank ${RANK_CLASS[rank] ?? ""}`}>{rank <= 3 ? MEDAL[rank] : rank}</span>
 
               {/* Name + email */}
               <div className="lb-identity">

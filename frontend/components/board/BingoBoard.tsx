@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useSubmitActivity, useUserSubmissions, useAuth } from "@/lib/hooks";
 import { FALLBACK_TASKS } from "@/constants/tasks";
 import BingoCell from "./BingoCell";
@@ -14,6 +15,13 @@ export default function BingoBoard() {
   const { submissions } = useUserSubmissions(demoUser?.id);
 
   const [error, setError] = useState<string | null>(null);
+
+  // Auto-dismiss error toast after 4 seconds
+  useEffect(() => {
+    if (!error) return;
+    const timer = setTimeout(() => setError(null), 4000);
+    return () => clearTimeout(timer);
+  }, [error]);
 
   const completedActivityIds = useMemo<Set<string>>(
     () => new Set(submissions?.map((s) => s.activity_id) ?? []),
@@ -36,27 +44,32 @@ export default function BingoBoard() {
 
   return (
     <section className="board-card board-card-main">
+      {error &&
+        createPortal(
+          <div className="toast-error">
+            <span>{error}</span>
+            <button className="toast-close" onClick={() => setError(null)}>
+              ×
+            </button>
+          </div>,
+          document.body,
+        )}
       <div className="board-header">
         <div>
           <p className="eyebrow">GLOW BINGO</p>
           <h2>My Activity Board</h2>
         </div>
-        <div className="progress-pill progress-pill-compact">
-          {completedCount}/25 complete
-        </div>
+        <div className="progress-pill progress-pill-compact">{completedCount}/25 complete</div>
       </div>
 
-      {error && <p className="form-error">{error}</p>}
-
       <div className="board-grid">
-        {FALLBACK_TASKS.map((task, index) => {
-          const activity: Activity = { id: `activity-${index}`, title: task };
+        {FALLBACK_TASKS.map((activity) => {
           const done = completedActivityIds.has(activity.id);
 
           return (
             <BingoCell
-              key={`${task}-${index}`}
-              task={task}
+              key={activity.id}
+              activity={activity}
               done={done}
               disabled={submitting}
               onClick={() => toggleTask(activity)}
@@ -65,15 +78,7 @@ export default function BingoBoard() {
         })}
       </div>
 
-      <div style={{ marginTop: "16px", textAlign: "center" }}>
-        <button
-          className="btn btn-secondary"
-          onClick={() => window.location.reload()}
-          style={{ width: "100%", maxWidth: "200px" }}
-        >
-          Reset
-        </button>
-      </div>
+      <div style={{ marginTop: "16px", textAlign: "center" }}></div>
     </section>
   );
 }

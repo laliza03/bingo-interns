@@ -13,6 +13,10 @@ export interface User {
 export interface Activity {
   id: string;
   title: string;
+  description: string;
+  requiresImage: boolean;
+  completed: boolean;
+  image: File | null;
 }
 
 export interface Submission {

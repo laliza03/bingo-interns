@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { useAuth } from "@/lib/hooks";
+import Navbar from "@/components/layout/Navbar";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -30,16 +31,18 @@ export default function MainLayout({ children }: MainLayoutProps) {
   return (
     <>
       {children}
-      <button
-        type="button"
-        className="btn btn-primary main-signout-btn"
-        onClick={async () => {
-          await logout();
-          router.replace("/login");
-        }}
-      >
-        Sign out
-      </button>
+      <div className="main-signout-wrapper">
+        <button
+          type="button"
+          className="btn btn-primary main-signout-btn"
+          onClick={async () => {
+            await logout();
+            router.replace("/login");
+          }}
+        >
+          Sign out
+        </button>
+      </div>
     </>
   );
 }

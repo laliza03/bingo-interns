@@ -1,13 +1,15 @@
 "use client";
 
+import type { Activity } from "@/types";
+
 interface BingoCellProps {
-  task: string;
+  activity: Activity;
   done: boolean;
   disabled: boolean;
   onClick: () => void;
 }
 
-export default function BingoCell({ task, done, disabled, onClick }: BingoCellProps) {
+export default function BingoCell({ activity, done, disabled, onClick }: BingoCellProps) {
   return (
     <button
       type="button"
@@ -16,9 +18,10 @@ export default function BingoCell({ task, done, disabled, onClick }: BingoCellPr
       aria-pressed={done}
       disabled={disabled}
     >
-      <p className="task-title">{task}</p>
-      <div className={`status-pill ${done ? "done" : ""}`}>
-        {done ? "✓ Done" : "Open"}
+      <p className="task-title">{activity.title}</p>
+      {done && <span className="cell-done-label">✓ Done</span>}
+      <div className="cell-hover-overlay">
+        <span>Open</span>
       </div>
     </button>
   );
