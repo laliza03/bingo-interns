@@ -24,6 +24,5 @@ export interface Submission {
   user_id: string;
   activity_id: string;
   image_url?: string;
-  status?: "pending" | "approved" | "rejected";
   created_at?: string;
 }

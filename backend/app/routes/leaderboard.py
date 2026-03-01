@@ -24,9 +24,6 @@ class UserStats(BaseModel):
     email: str
     total_points: int
     completed_activities: int
-    approved_submissions: int
-    pending_submissions: int
-    rejected_submissions: int
 
 
 @router.get("/leaderboard/top", response_model=List[LeaderboardEntry])
@@ -48,7 +45,6 @@ def get_top_users(
         )
         .join(Submission, Profile.id == Submission.user_id)
         .join(Activity, Submission.activity_id == Activity.id)
-        .where(Submission.status == "approved")
         .group_by(Profile.id, Profile.email)
         .order_by(func.sum(Activity.points).desc())
         .limit(limit)
@@ -130,8 +126,8 @@ def get_user_stats(user_id: uuid_pkg.UUID, session: Session = Depends(get_sessio
             detail="User not found"
         )
     
-    # Get approved submissions with points
-    approved_statement = (
+    # Get all submissions with points
+    stats_statement = (
         select(
             func.sum(Activity.points).label("total_points"),
             func.count(Submission.id).label("completed_activities")
@@ -139,33 +135,16 @@ def get_user_stats(user_id: uuid_pkg.UUID, session: Session = Depends(get_sessio
         .select_from(Submission)
         .join(Activity, Submission.activity_id == Activity.id)
         .where(Submission.user_id == user_id)
-        .where(Submission.status == "approved")
     )
-    approved_result = session.exec(approved_statement).first()
-    total_points = approved_result[0] or 0 if approved_result else 0
-    completed_activities = approved_result[1] or 0 if approved_result else 0
-    
-    # Get submission counts by status
-    pending_count = session.exec(
-        select(func.count(Submission.id))
-        .where(Submission.user_id == user_id)
-        .where(Submission.status == "pending")
-    ).first() or 0
-    
-    rejected_count = session.exec(
-        select(func.count(Submission.id))
-        .where(Submission.user_id == user_id)
-        .where(Submission.status == "rejected")
-    ).first() or 0
+    stats_result = session.exec(stats_statement).first()
+    total_points = stats_result[0] or 0 if stats_result else 0
+    completed_activities = stats_result[1] or 0 if stats_result else 0
     
     return UserStats(
         user_id=user_id,
         email=user.email,
         total_points=int(total_points),
-        completed_activities=int(completed_activities),
-        approved_submissions=int(completed_activities),
-        pending_submissions=int(pending_count),
-        rejected_submissions=int(rejected_count)
+        completed_activities=int(completed_activities)
     )
 
 
@@ -175,22 +154,9 @@ def get_global_stats(session: Session = Depends(get_session)):
     total_users = session.exec(select(func.count(Profile.id))).first() or 0
     total_activities = session.exec(select(func.count(Activity.id))).first() or 0
     total_submissions = session.exec(select(func.count(Submission.id))).first() or 0
-    approved_submissions = session.exec(
-        select(func.count(Submission.id)).where(Submission.status == "approved")
-    ).first() or 0
-    
-    from app.models.bingo_board import BingoBoard
-    total_boards = session.exec(select(func.count(BingoBoard.id))).first() or 0
-    active_boards = session.exec(
-        select(func.count(BingoBoard.id)).where(BingoBoard.is_active == True)
-    ).first() or 0
     
     return {
         "total_users": total_users,
         "total_activities": total_activities,
-        "total_boards": total_boards,
-        "active_boards": active_boards,
-        "total_submissions": total_submissions,
-        "approved_submissions": approved_submissions,
-        "pending_submissions": total_submissions - approved_submissions
+        "total_submissions": total_submissions
     }

@@ -36,14 +36,12 @@ class Submission(SQLModel, table=True):
     user_id: uuid_pkg.UUID = Field(foreign_key="profiles.id")
     activity_id: uuid_pkg.UUID = Field(foreign_key="activities.id")
     image_url: str
-    status: str
 
 
 class SubmissionCreate(SQLModel):
     user_id: uuid_pkg.UUID
     activity_id: uuid_pkg.UUID
     image_url: str
-    status: str = "pending"
 
 
 class SubmissionResponse(SQLModel):
@@ -52,4 +50,3 @@ class SubmissionResponse(SQLModel):
     user_id: uuid_pkg.UUID
     activity_id: uuid_pkg.UUID
     image_url: str
-    status: str

@@ -14,7 +14,6 @@ export async function submitActivity(userId: string, activityId: string, imageUr
       user_id: userId,
       activity_id: activityId,
       image_url: imageUrl || "image place holder text",
-      status: "pending",
     }),
   });
 

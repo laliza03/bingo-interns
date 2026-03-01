@@ -13,10 +13,6 @@ router = APIRouter()
 
 
 # Additional request models
-class SubmissionUpdate(BaseModel):
-    status: str  # "pending", "approved", "rejected"
-
-
 class ActivityUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
@@ -24,16 +20,6 @@ class ActivityUpdate(BaseModel):
 
 
 # ============= ACTIVITY ROUTES =============
-
-@router.post("/activities", response_model=ActivityResponse, status_code=status.HTTP_201_CREATED)
-def create_activity(activity_data: ActivityCreate, session: Session = Depends(get_session)):
-    """Create a new activity"""
-    new_activity = Activity(**activity_data.model_dump())
-    session.add(new_activity)
-    session.commit()
-    session.refresh(new_activity)
-    return new_activity
-
 
 @router.get("/activities", response_model=List[ActivityResponse])
 def get_activities(session: Session = Depends(get_session)):
@@ -72,46 +58,6 @@ def get_activity(activity_id: uuid_pkg.UUID, session: Session = Depends(get_sess
             detail="Activity not found"
         )
     return activity
-
-
-@router.put("/activities/{activity_id}", response_model=ActivityResponse)
-def update_activity(
-    activity_id: uuid_pkg.UUID,
-    activity_data: ActivityUpdate,
-    session: Session = Depends(get_session)
-):
-    """Update an activity"""
-    activity = session.get(Activity, activity_id)
-    if not activity:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Activity not found"
-        )
-    
-    # Update only provided fields
-    update_data = activity_data.model_dump(exclude_unset=True)
-    for key, value in update_data.items():
-        setattr(activity, key, value)
-    
-    session.add(activity)
-    session.commit()
-    session.refresh(activity)
-    return activity
-
-
-@router.delete("/activities/{activity_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_activity(activity_id: uuid_pkg.UUID, session: Session = Depends(get_session)):
-    """Delete an activity"""
-    activity = session.get(Activity, activity_id)
-    if not activity:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Activity not found"
-        )
-    
-    session.delete(activity)
-    session.commit()
-    return None
 
 
 # ============= SUBMISSION ROUTES =============
@@ -183,35 +129,4 @@ def get_submission(submission_id: uuid_pkg.UUID, session: Session = Depends(get_
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Submission not found"
         )
-    return submission
-
-
-@router.patch("/submissions/{submission_id}/status", response_model=SubmissionResponse)
-def update_submission_status(
-    submission_id: uuid_pkg.UUID,
-    status_update: SubmissionUpdate,
-    session: Session = Depends(get_session)
-):
-    """
-    Update submission status (approve/reject).
-    Status options: 'pending', 'approved', 'rejected'
-    """
-    submission = session.get(Submission, submission_id)
-    if not submission:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Submission not found"
-        )
-    
-    valid_statuses = ["pending", "approved", "rejected"]
-    if status_update.status not in valid_statuses:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid status. Must be one of: {', '.join(valid_statuses)}"
-        )
-    
-    submission.status = status_update.status
-    session.add(submission)
-    session.commit()
-    session.refresh(submission)
     return submission
