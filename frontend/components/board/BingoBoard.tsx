@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { useSubmitActivity, useUserSubmissions, useAuth } from "@/lib/hooks";
 import { FALLBACK_TASKS } from "@/constants/tasks";
 import BingoCell from "./BingoCell";
+import ActivityModal from "./ActivityModal";
 import type { Activity } from "@/types";
 
 export default function BingoBoard() {
@@ -15,6 +16,7 @@ export default function BingoBoard() {
   const { submissions } = useUserSubmissions(demoUser?.id);
 
   const [error, setError] = useState<string | null>(null);
+  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
 
   // Auto-dismiss error toast after 4 seconds
   useEffect(() => {
@@ -30,13 +32,11 @@ export default function BingoBoard() {
 
   const completedCount = completedActivityIds.size;
 
-  const toggleTask = async (activity: Activity): Promise<void> => {
+  const toggleTask = async (activityId: string, image: File | null, _completed: boolean): Promise<void> => {
     if (!demoUser) return;
     try {
-      const isCompleted = completedActivityIds.has(activity.id);
-      if (!isCompleted) {
-        await submitActivity(demoUser.id, activity.id);
-      }
+      // TODO: upload image to backend/storage when supported
+      await submitActivity(demoUser.id, activityId);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     }
@@ -72,13 +72,17 @@ export default function BingoBoard() {
               activity={activity}
               done={done}
               disabled={submitting}
-              onClick={() => toggleTask(activity)}
+              onClick={() => setSelectedActivity(activity)}
             />
           );
         })}
       </div>
 
       <div style={{ marginTop: "16px", textAlign: "center" }}></div>
+
+      {selectedActivity && (
+        <ActivityModal activity={selectedActivity} onSubmit={toggleTask} onClose={() => setSelectedActivity(null)} />
+      )}
     </section>
   );
 }
