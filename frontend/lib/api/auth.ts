@@ -24,20 +24,6 @@ function requireClient() {
   return supabase;
 }
 
-async function syncProfileToBackend(user: User): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/users/sync`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ id: user.id, email: user.email }),
-  });
-
-  if (!response.ok) {
-    const payload = await response.json().catch(() => ({}));
-    const message = payload?.detail ?? "Authenticated, but failed to sync user profile";
-    throw new Error(message);
-  }
-}
-
 export async function registerUser(email: string, password: string): Promise<User> {
   const client = requireClient();
   const { data, error } = await client.auth.signUp({ email, password });

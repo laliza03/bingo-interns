@@ -3,6 +3,7 @@
 import { useRouter } from "next/dist/client/components/navigation";
 import { useEffect } from "react";
 import { useAuth } from "../lib/hooks";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 export default function HomePage() {
   const { user, loading } = useAuth();
@@ -17,6 +18,10 @@ export default function HomePage() {
   }, [loading, user, router]);
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="loading-screen">
+        <LoadingSpinner message="Loading your board…" size="lg" />
+      </div>
+    );
   }
 }

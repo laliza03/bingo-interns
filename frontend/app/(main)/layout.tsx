@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { useAuth } from "@/lib/hooks";
 import Navbar from "@/components/layout/Navbar";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -21,7 +22,11 @@ export default function MainLayout({ children }: MainLayoutProps) {
   }, [loading, user, router]);
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="loading-screen">
+        <LoadingSpinner message="Loading your board…" size="lg" />
+      </div>
+    );
   }
 
   if (!user) {
