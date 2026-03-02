@@ -1,9 +1,9 @@
 "use client";
 
-import type { Activity, DBActivity } from "@/types";
+import type { Activity } from "@/types";
 
 interface BingoCellProps {
-  activity: DBActivity;
+  activity: Activity;
   done: boolean;
   disabled: boolean;
   onClick: () => void;

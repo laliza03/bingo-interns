@@ -1,15 +1,15 @@
 import { useState, useEffect } from "react";
 import { getActivities } from "@/lib/api";
-import type { Activity, DBActivity } from "@/types";
+import type { Activity } from "@/types";
 
 interface UseActivitiesResult {
-  activities: DBActivity[];
+  activities: Activity[];
   loading: boolean;
   error: string | null;
 }
 
 export function useActivities(): UseActivitiesResult {
-  const [activities, setActivities] = useState<DBActivity[]>([]);
+  const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
