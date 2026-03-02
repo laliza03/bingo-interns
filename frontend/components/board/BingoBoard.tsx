@@ -2,7 +2,12 @@
 
 import { useMemo, useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { useSubmitActivity, useUserSubmissions, useAuth, useActivities } from "@/lib/hooks";
+import {
+  useSubmitActivity,
+  useUserSubmissions,
+  useAuth,
+  useActivities,
+} from "@/lib/hooks";
 import { FALLBACK_TASKS } from "@/constants/tasks";
 import BingoCell from "./BingoCell";
 import ActivityModal from "./ActivityModal";
@@ -10,15 +15,20 @@ import type { Activity } from "@/types";
 
 export default function BingoBoard() {
   const { user } = useAuth();
-  const demoUser = user ?? { id: "demo-user", email: "demo@example.com" };
 
   const { submit: submitActivity, loading: submitting } = useSubmitActivity();
-  const { submissions } = useUserSubmissions(demoUser?.id);
-  const { activities, loading: activitiesLoading, error: activitiesError } = useActivities();
+  const { submissions } = useUserSubmissions(user?.id ?? null);
+  const {
+    activities,
+    loading: activitiesLoading,
+    error: activitiesError,
+  } = useActivities();
 
   const displayActivities = activities.length > 0 ? activities : FALLBACK_TASKS;
   const [error, setError] = useState<string | null>(null);
-  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
+  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(
+    null,
+  );
 
   useEffect(() => {
     if (activitiesError) setError(activitiesError);
@@ -38,11 +48,15 @@ export default function BingoBoard() {
 
   const completedCount = completedActivityIds.size;
 
-  const toggleTask = async (activityId: string, image: File | null, _completed: boolean): Promise<void> => {
-    if (!demoUser) return;
+  const toggleTask = async (
+    activityId: string,
+    image: File | null,
+    _completed: boolean,
+  ): Promise<void> => {
+    if (!user) return;
     try {
       // TODO: upload image to backend/storage when supported
-      await submitActivity(demoUser.id, activityId);
+      await submitActivity(user.id, activityId);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     }
@@ -65,7 +79,9 @@ export default function BingoBoard() {
           <p className="eyebrow">GLOW BINGO</p>
           <h2>My Activity Board</h2>
         </div>
-        <div className="progress-pill progress-pill-compact">{completedCount}/25 complete</div>
+        <div className="progress-pill progress-pill-compact">
+          {completedCount}/25 complete
+        </div>
       </div>
 
       {activitiesLoading ? (
@@ -90,7 +106,11 @@ export default function BingoBoard() {
       <div style={{ marginTop: "16px", textAlign: "center" }}></div>
 
       {selectedActivity && (
-        <ActivityModal activity={selectedActivity} onSubmit={toggleTask} onClose={() => setSelectedActivity(null)} />
+        <ActivityModal
+          activity={selectedActivity}
+          onSubmit={toggleTask}
+          onClose={() => setSelectedActivity(null)}
+        />
       )}
     </section>
   );

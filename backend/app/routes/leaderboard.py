@@ -26,15 +26,20 @@ class UserStats(BaseModel):
     completed_activities: int
 
 
-@router.get("/leaderboard/top", response_model=List[LeaderboardEntry])
+@router.get(
+    "/leaderboard/top",
+    response_model=List[LeaderboardEntry],
+    summary="Top users by points",
+    description=(
+        "Returns the highest-scoring users ranked by total points accumulated from approved submissions.\n\n"
+        "Use the `limit` query parameter to control how many entries to return (default **5**)."
+    ),
+    response_description="Ranked list of top users with their total points and completed activity count",
+)
 def get_top_users(
     limit: int = 5,
     session: Session = Depends(get_session)
 ):
-    """
-    Get top users by total points earned.
-    Default returns top 5, but can be customized with limit parameter.
-    """
     # Get approved submissions with activity points
     statement = (
         select(
@@ -66,16 +71,22 @@ def get_top_users(
     return leaderboard
 
 
-@router.get("/leaderboard/board/{board_id}", response_model=List[LeaderboardEntry])
+@router.get(
+    "/leaderboard/board/{board_id}",
+    response_model=List[LeaderboardEntry],
+    summary="Leaderboard for a specific board",
+    description=(
+        "Returns the top users ranked by points earned **only** on the specified bingo board.\n\n"
+        "Use the `limit` query parameter to control how many entries to return (default **5**). "
+        "Returns an empty list if the board does not exist."
+    ),
+    response_description="Ranked list of top users for the given board",
+)
 def get_board_leaderboard(
     board_id: uuid_pkg.UUID,
     limit: int = 5,
     session: Session = Depends(get_session)
 ):
-    """
-    Get top users for a specific bingo board.
-    Returns users ranked by points earned on that board only.
-    """
     from app.models.bingo_board import BingoBoard
     
     # Verify board exists
@@ -114,7 +125,20 @@ def get_board_leaderboard(
     return leaderboard
 
 
-@router.get("/stats/user/{user_id}", response_model=UserStats)
+@router.get(
+    "/stats/user/{user_id}",
+    response_model=UserStats,
+    summary="User statistics",
+    description=(
+        "Returns the total points and number of completed activities for a single user.\n\n"
+        "Only submissions that have a matching activity with a `points` value contribute to the total."
+    ),
+    response_description="Aggregated stats for the requested user",
+    responses={
+        200: {"description": "Stats returned successfully"},
+        404: {"description": "No profile exists for the given `user_id`"},
+    },
+)
 def get_user_stats(user_id: uuid_pkg.UUID, session: Session = Depends(get_session)):
     """Get comprehensive statistics for a specific user"""
     # Verify user exists
@@ -148,7 +172,17 @@ def get_user_stats(user_id: uuid_pkg.UUID, session: Session = Depends(get_sessio
     )
 
 
-@router.get("/stats/global")
+@router.get(
+    "/stats/global",
+    summary="Global platform statistics",
+    description=(
+        "Returns high-level counters for the entire platform:\n\n"
+        "- `total_users` – total registered profiles\n"
+        "- `total_activities` – total activities in the database\n"
+        "- `total_submissions` – total activity submissions across all users"
+    ),
+    response_description="Aggregated platform-wide statistics",
+)
 def get_global_stats(session: Session = Depends(get_session)):
     """Get overall platform statistics"""
     total_users = session.exec(select(func.count(Profile.id))).first() or 0

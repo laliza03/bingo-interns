@@ -9,7 +9,8 @@ import { supabase } from "@/lib/supabaseClient";
 import type { User } from "@/types";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api";
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api";
 
 /** Map a Supabase user object to our app's User shape */
 function toAppUser(su: SupabaseUser): User {
@@ -24,7 +25,10 @@ function requireClient() {
   return supabase;
 }
 
-export async function registerUser(email: string, password: string): Promise<User> {
+export async function registerUser(
+  email: string,
+  password: string,
+): Promise<User> {
   const client = requireClient();
   const { data, error } = await client.auth.signUp({ email, password });
 
@@ -36,7 +40,10 @@ export async function registerUser(email: string, password: string): Promise<Use
   return user;
 }
 
-export async function loginUser(email: string, password: string): Promise<User> {
+export async function loginUser(
+  email: string,
+  password: string,
+): Promise<User> {
   const client = requireClient();
   const { data, error } = await client.auth.signInWithPassword({
     email,

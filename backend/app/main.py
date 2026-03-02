@@ -14,11 +14,53 @@ async def lifespan(app: FastAPI):
     yield
     # Shutdown: cleanup if needed
 
+tags_metadata = [
+    {
+        "name": "users",
+        "description": (
+            "Operations related to user profiles. "
+            "Handles synchronisation of Supabase-authenticated users into backend tables "
+            "and retrieval of profile information."
+        ),
+    },
+    {
+        "name": "activities",
+        "description": (
+            "Manage bingo activities (challenges) and submissions. "
+            "Activities occupy positions 0-24 on the bingo board. "
+            "Submissions represent proof (image URL) that a user completed a challenge."
+        ),
+    },
+    {
+        "name": "leaderboard",
+        "description": (
+            "Leaderboard and statistics endpoints. "
+            "Returns ranked users by total points as well as per-user and global platform stats."
+        ),
+    },
+]
+
 app = FastAPI(
     lifespan=lifespan,
     title="Bingo App API",
-    description="Backend API for Bingo challenge game with image submissions and leaderboards",
-    version="1.0.0"
+    description=(
+        "## Bingo Challenge Game API\n\n"
+        "Backend REST API powering the Bingo intern challenge game.\n\n"
+        "### Features\n"
+        "- **User sync** – keeps backend profiles in sync with Supabase Auth\n"
+        "- **Activities** – 25-cell bingo board challenges with point values\n"
+        "- **Submissions** – image-proof submissions for completed activities\n"
+        "- **Leaderboard** – real-time ranking by points and per-board rankings\n\n"
+        "All IDs are UUIDs. Timestamps are UTC ISO-8601 strings."
+    ),
+    version="1.0.0",
+    openapi_tags=tags_metadata,
+    contact={
+        "name": "Bingo Interns Team",
+    },
+    license_info={
+        "name": "MIT",
+    },
 )
 
 # Configure CORS for frontend
@@ -35,7 +77,12 @@ app.include_router(users.router, prefix="/api", tags=["users"])
 app.include_router(activities.router, prefix="/api", tags=["activities"])
 app.include_router(leaderboard.router, prefix="/api", tags=["leaderboard"])
 
-@app.get("/")
+@app.get(
+    "/",
+    summary="Root",
+    description="Returns basic information about the running API.",
+    include_in_schema=False,
+)
 def root():
     return {
         "message": "Bingo App API",
@@ -44,7 +91,16 @@ def root():
         "docs": "/docs"
     }
 
-@app.get("/health")
+@app.get(
+    "/health",
+    summary="Health check",
+    description="Verifies the API process is alive and that the database connection is working.",
+    tags=["health"],
+    responses={
+        200: {"description": "Service and database are healthy"},
+        500: {"description": "Database connection failed"},
+    },
+)
 def test_database():
     """Test database connection"""
     try:

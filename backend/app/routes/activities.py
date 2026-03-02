@@ -21,13 +21,19 @@ class ActivityUpdate(BaseModel):
 
 # ============= ACTIVITY ROUTES =============
 
-@router.get("/activities", response_model=List[ActivityResponse])
+@router.get(
+    "/activities",
+    response_model=List[ActivityResponse],
+    summary="List bingo board activities",
+    description=(
+        "Returns up to **25** activities — one per bingo-board position (0-24).\n\n"
+        "When multiple activities share the same `index`, the most recently created one wins. "
+        "Activities whose `index` is `null` are excluded from the result. "
+        "The response list is sorted by `index` ascending."
+    ),
+    response_description="Ordered list of up to 25 unique activities",
+)
 def get_activities(session: Session = Depends(get_session)):
-    """
-    Get up to 25 activities with unique index values (0-24).
-    When multiple activities share the same index, the most recently
-    created one wins. Activities with no index (None) are ignored.
-    """
     statement = select(Activity).order_by(Activity.created_at.desc())
     all_activities = session.exec(statement).all()
 
@@ -48,7 +54,17 @@ def get_activities(session: Session = Depends(get_session)):
     return unique_activities
 
 
-@router.get("/activities/{activity_id}", response_model=ActivityResponse)
+@router.get(
+    "/activities/{activity_id}",
+    response_model=ActivityResponse,
+    summary="Get activity by ID",
+    description="Retrieve a single bingo activity by its UUID.",
+    response_description="The requested activity",
+    responses={
+        200: {"description": "Activity found"},
+        404: {"description": "No activity exists for the given `activity_id`"},
+    },
+)
 def get_activity(activity_id: uuid_pkg.UUID, session: Session = Depends(get_session)):
     """Get an activity by ID"""
     activity = session.get(Activity, activity_id)
@@ -62,12 +78,26 @@ def get_activity(activity_id: uuid_pkg.UUID, session: Session = Depends(get_sess
 
 # ============= SUBMISSION ROUTES =============
 
-@router.post("/submissions", response_model=SubmissionResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/submissions",
+    response_model=SubmissionResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Submit activity proof",
+    description=(
+        "Record that a user has completed a bingo activity by providing an image URL as proof.\n\n"
+        "**Validation rules**:\n"
+        "- The `user_id` must reference an existing profile.\n"
+        "- The `activity_id` must reference an existing activity.\n"
+        "- A user may only submit once per activity (duplicate submissions return **400**)."
+    ),
+    response_description="The newly created submission record",
+    responses={
+        201: {"description": "Submission created successfully"},
+        400: {"description": "User has already submitted for this activity"},
+        404: {"description": "User or activity not found"},
+    },
+)
 def create_submission(submission_data: SubmissionCreate, session: Session = Depends(get_session)):
-    """
-    Create a new submission for an activity.
-    User submits proof (image_url) that they completed an activity.
-    """
     # Verify user exists
     from app.models.user import Profile
     user = session.get(Profile, submission_data.user_id)
@@ -104,7 +134,13 @@ def create_submission(submission_data: SubmissionCreate, session: Session = Depe
     return new_submission
 
 
-@router.get("/submissions/user/{user_id}", response_model=List[SubmissionResponse])
+@router.get(
+    "/submissions/user/{user_id}",
+    response_model=List[SubmissionResponse],
+    summary="Get submissions by user",
+    description="Returns all activity submissions made by the specified user.",
+    response_description="List of submissions for the user",
+)
 def get_user_submissions(user_id: uuid_pkg.UUID, session: Session = Depends(get_session)):
     """Get all submissions for a specific user"""
     statement = select(Submission).where(Submission.user_id == user_id)
@@ -112,7 +148,13 @@ def get_user_submissions(user_id: uuid_pkg.UUID, session: Session = Depends(get_
     return submissions
 
 
-@router.get("/submissions/activity/{activity_id}", response_model=List[SubmissionResponse])
+@router.get(
+    "/submissions/activity/{activity_id}",
+    response_model=List[SubmissionResponse],
+    summary="Get submissions by activity",
+    description="Returns all user submissions for the specified activity.",
+    response_description="List of submissions for the activity",
+)
 def get_activity_submissions(activity_id: uuid_pkg.UUID, session: Session = Depends(get_session)):
     """Get all submissions for a specific activity"""
     statement = select(Submission).where(Submission.activity_id == activity_id)
@@ -120,7 +162,17 @@ def get_activity_submissions(activity_id: uuid_pkg.UUID, session: Session = Depe
     return submissions
 
 
-@router.get("/submissions/{submission_id}", response_model=SubmissionResponse)
+@router.get(
+    "/submissions/{submission_id}",
+    response_model=SubmissionResponse,
+    summary="Get submission by ID",
+    description="Retrieve a single submission record by its UUID.",
+    response_description="The requested submission",
+    responses={
+        200: {"description": "Submission found"},
+        404: {"description": "No submission exists for the given `submission_id`"},
+    },
+)
 def get_submission(submission_id: uuid_pkg.UUID, session: Session = Depends(get_session)):
     """Get a specific submission"""
     submission = session.get(Submission, submission_id)
