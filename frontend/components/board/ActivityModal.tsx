@@ -1,57 +1,76 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import type { Activity } from "@/types";
 
 interface ActivityModalProps {
   activity: Activity;
-  onSubmit: (activityId: string, image: File | null, completed: boolean) => Promise<void>;
+  onSubmit: (activityId: string, image: File | null) => Promise<void>;
   onClose: () => void;
 }
 
-export default function ActivityModal({ activity, onSubmit, onClose }: ActivityModalProps) {
+export default function ActivityModal({
+  activity,
+  onSubmit,
+  onClose,
+}: ActivityModalProps) {
   const [image, setImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
-  const [completed, setCompleted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [dragging, setDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] ?? null;
+  const pickFile = (file: File | null) => {
     setImage(file);
-    if (file) {
-      const url = URL.createObjectURL(file);
-      setPreview(url);
-    } else {
-      setPreview(null);
-    }
+    setPreview(file ? URL.createObjectURL(file) : null);
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    pickFile(e.target.files?.[0] ?? null);
   };
 
   const handleRemoveImage = () => {
-    setImage(null);
-    setPreview(null);
+    pickFile(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
+
+  // ---- Drag & drop handlers ----
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragging(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type.startsWith("image/")) {
+      pickFile(file);
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (activity.requiresImage && !image) {
+    if (activity.isImageRequired && !image) {
       setError("This activity requires an image.");
-      return;
-    }
-
-    if (!completed) {
-      setError("Please mark the activity as completed.");
       return;
     }
 
     setError(null);
     setLoading(true);
     try {
-      await onSubmit(activity.id, image, completed);
+      await onSubmit(activity.id, image);
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Submission failed");
@@ -66,7 +85,11 @@ export default function ActivityModal({ activity, onSubmit, onClose }: ActivityM
         {/* Header */}
         <div className="modal-header">
           <h2 className="modal-title">{activity.title}</h2>
-          <button className="modal-close-btn" onClick={onClose} aria-label="Close">
+          <button
+            className="modal-close-btn"
+            onClick={onClose}
+            aria-label="Close"
+          >
             ×
           </button>
         </div>
@@ -78,15 +101,25 @@ export default function ActivityModal({ activity, onSubmit, onClose }: ActivityM
           {error && <p className="form-error">{error}</p>}
 
           {/* Image upload */}
-          {activity.requiresImage && (
+          {activity.isImageRequired && (
             <div className="modal-field">
               <label htmlFor="activity-image">
                 Upload image <span className="modal-required">*required</span>
               </label>
-              <div className="modal-file-zone" onClick={() => fileInputRef.current?.click()}>
+              <div
+                className={`modal-file-zone${dragging ? " drag-over" : ""}`}
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+              >
                 {preview ? (
                   <div className="modal-preview-wrapper">
-                    <img src={preview} alt="Preview" className="modal-preview-img" />
+                    <img
+                      src={preview}
+                      alt="Preview"
+                      className="modal-preview-img"
+                    />
                     <button
                       type="button"
                       className="modal-preview-remove"
@@ -101,7 +134,7 @@ export default function ActivityModal({ activity, onSubmit, onClose }: ActivityM
                 ) : (
                   <div className="modal-file-placeholder">
                     <span className="modal-file-icon">📷</span>
-                    <span>Click to upload an image</span>
+                    <span>Click or drag an image here</span>
                   </div>
                 )}
               </div>
@@ -116,20 +149,13 @@ export default function ActivityModal({ activity, onSubmit, onClose }: ActivityM
             </div>
           )}
 
-          {/* Completed checkbox */}
-          <label className="modal-checkbox-label">
-            <input
-              type="checkbox"
-              checked={completed}
-              onChange={(e) => setCompleted(e.target.checked)}
-              className="modal-checkbox"
-            />
-            <span>I have completed this activity</span>
-          </label>
-
           {/* Submit */}
-          <button className="btn btn-primary modal-submit-btn" type="submit" disabled={loading}>
-            {loading ? "Submitting…" : "Submit"}
+          <button
+            className="btn btn-primary modal-submit-btn"
+            type="submit"
+            disabled={loading}
+          >
+            {loading ? "Submitting…" : "Complete Activity"}
           </button>
         </form>
       </div>

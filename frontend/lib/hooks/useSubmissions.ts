@@ -1,13 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { submitActivity as apiSubmit, getUserSubmissions } from "@/lib/api";
 import type { Submission } from "@/types";
 
 interface UseSubmitActivityResult {
-  submit: (
-    userId: string,
-    activityId: string,
-    imageUrl?: string,
-  ) => Promise<Submission>;
+  submit: (userId: string, activityId: string) => Promise<Submission>;
   loading: boolean;
   error: string | null;
 }
@@ -16,6 +12,8 @@ interface UseUserSubmissionsResult {
   submissions: Submission[];
   loading: boolean;
   error: string | null;
+  /** Re-fetch submissions from the server. */
+  refetch: () => void;
 }
 
 export function useSubmitActivity(): UseSubmitActivityResult {
@@ -25,12 +23,11 @@ export function useSubmitActivity(): UseSubmitActivityResult {
   const submit = async (
     userId: string,
     activityId: string,
-    imageUrl: string = "",
   ): Promise<Submission> => {
     setLoading(true);
     setError(null);
     try {
-      const submission = await apiSubmit(userId, activityId, imageUrl);
+      const submission = await apiSubmit(userId, activityId);
       return submission;
     } catch (err) {
       const message = err instanceof Error ? err.message : "Submission failed";
@@ -50,6 +47,9 @@ export function useUserSubmissions(
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState<boolean>(!!userId);
   const [error, setError] = useState<string | null>(null);
+  const [tick, setTick] = useState(0);
+
+  const refetch = useCallback(() => setTick((t) => t + 1), []);
 
   useEffect(() => {
     if (!userId) return;
@@ -73,7 +73,7 @@ export function useUserSubmissions(
     return () => {
       cancelled = true;
     };
-  }, [userId]);
+  }, [userId, tick]);
 
-  return { submissions, loading, error };
+  return { submissions, loading, error, refetch };
 }

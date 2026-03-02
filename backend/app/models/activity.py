@@ -11,8 +11,8 @@ class Activity(SQLModel, table=True):
     created_at: Optional[datetime] = Field(default_factory=datetime.utcnow)
     title: str
     description: str
-    points: int
-
+    isImageRequired: bool = False
+    index: Optional[int] = None
 
 class ActivityCreate(SQLModel):
     title: str
@@ -25,7 +25,8 @@ class ActivityResponse(SQLModel):
     created_at: datetime
     title: str
     description: str
-    points: int
+    isImageRequired: bool
+    index: Optional[int] = None
 
 
 class Submission(SQLModel, table=True):
@@ -35,15 +36,11 @@ class Submission(SQLModel, table=True):
     created_at: Optional[datetime] = Field(default_factory=datetime.utcnow)
     user_id: uuid_pkg.UUID = Field(foreign_key="profiles.id")
     activity_id: uuid_pkg.UUID = Field(foreign_key="activities.id")
-    image_url: str
-    status: str
 
 
 class SubmissionCreate(SQLModel):
     user_id: uuid_pkg.UUID
     activity_id: uuid_pkg.UUID
-    image_url: str
-    status: str = "pending"
 
 
 class SubmissionResponse(SQLModel):
@@ -51,5 +48,3 @@ class SubmissionResponse(SQLModel):
     created_at: datetime
     user_id: uuid_pkg.UUID
     activity_id: uuid_pkg.UUID
-    image_url: str
-    status: str

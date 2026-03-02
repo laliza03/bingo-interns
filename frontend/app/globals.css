@@ -309,6 +309,13 @@ input:focus {
   flex: 1;
 }
 
+.board-grid-loader {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
 .board-cell {
   position: relative;
   min-height: 96px;
@@ -335,26 +342,15 @@ input:focus {
 }
 
 .board-cell.completed {
-  background: linear-gradient(180deg, #fff6ef, #fff3ea);
-  border-color: #f1b391;
+  background: #d4edda;
+  border-color: var(--border);
 }
 
-.cell-check-badge {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
-  color: #fff;
-  font-size: 13px;
-  font-weight: 800;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-  z-index: 1;
+.cell-done-label {
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #4a9e6e;
 }
 
 .board-cell.completed:hover .cell-hover-overlay {
@@ -382,12 +378,6 @@ input:focus {
   letter-spacing: 0.06em;
 }
 
-.cell-done-label {
-  margin-top: 6px;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--accent-strong);
-}
 
 .task-title {
   font-size: 14px;
@@ -905,7 +895,8 @@ input:focus {
   transition: border-color 0.15s ease, background 0.15s ease;
 }
 
-.modal-file-zone:hover {
+.modal-file-zone:hover,
+.modal-file-zone.drag-over {
   border-color: var(--accent);
   background: var(--pill);
 }

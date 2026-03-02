@@ -7,18 +7,35 @@ import uuid as uuid_pkg
 router = APIRouter()
 
 
-@router.post("/users/sync", response_model=UserResponse, status_code=status.HTTP_200_OK)
+@router.post(
+    "/users/sync",
+    response_model=UserResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Sync user profile",
+    description=(
+        "Upserts a profile row for a Supabase-authenticated user.\n\n"
+        "Call this immediately after Supabase sign-up or sign-in so that all "
+        "backend tables that reference `profiles.id` remain consistent.\n\n"
+        "- If the profile already exists by `id`, the email and name are updated if changed.\n"
+        "- If the `id` is new but the email belongs to a different profile, a **409** is returned."
+    ),
+    response_description="The created or updated user profile",
+    responses={
+        200: {"description": "Profile already existed and was returned (or updated)"},
+        409: {"description": "Email already registered to a different user ID"},
+    },
+)
 def sync_user_profile(user_data: UserSync, session: Session = Depends(get_session)):
-    """
-    Ensure a profile row exists for a Supabase-authenticated user.
-
-    This endpoint is intended to be called after Supabase sign-up/sign-in so
-    backend tables that reference profiles.id continue to work.
-    """
     existing_by_id = session.get(Profile, user_data.id)
     if existing_by_id:
+        changed = False
         if existing_by_id.email != user_data.email:
             existing_by_id.email = user_data.email
+            changed = True
+        if user_data.name is not None and existing_by_id.name != user_data.name:
+            existing_by_id.name = user_data.name
+            changed = True
+        if changed:
             session.add(existing_by_id)
             session.commit()
             session.refresh(existing_by_id)
@@ -33,14 +50,24 @@ def sync_user_profile(user_data: UserSync, session: Session = Depends(get_sessio
             detail="Email already exists for another profile",
         )
 
-    new_profile = Profile(id=user_data.id, email=user_data.email)
+    new_profile = Profile(id=user_data.id, email=user_data.email, name=user_data.name)
     session.add(new_profile)
     session.commit()
     session.refresh(new_profile)
     return new_profile
 
 
-@router.get("/users/{user_id}", response_model=UserResponse)
+@router.get(
+    "/users/{user_id}",
+    response_model=UserResponse,
+    summary="Get user by ID",
+    description="Retrieve a single user profile by their UUID.",
+    response_description="The requested user profile",
+    responses={
+        200: {"description": "User profile found"},
+        404: {"description": "No profile exists for the given `user_id`"},
+    },
+)
 def get_user(user_id: uuid_pkg.UUID, session: Session = Depends(get_session)):
     """Get a user by ID"""
     user = session.get(Profile, user_id)
@@ -52,7 +79,13 @@ def get_user(user_id: uuid_pkg.UUID, session: Session = Depends(get_session)):
     return user
 
 
-@router.get("/users", response_model=list[UserResponse])
+@router.get(
+    "/users",
+    response_model=list[UserResponse],
+    summary="List all users",
+    description="Returns every user profile stored in the database.",
+    response_description="Array of user profiles",
+)
 def list_users(session: Session = Depends(get_session)):
     """List all users"""
     users = session.exec(select(Profile)).all()

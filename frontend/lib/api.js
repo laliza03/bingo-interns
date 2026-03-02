@@ -5,6 +5,6 @@
  * All API logic now lives in lib/api/ (split by domain).
  *
  * Prefer importing directly:
- *   import { loginUser, getBoard } from "@/lib/api";
+ *   import { loginUser } from "@/lib/api";
  */
 export * from "./api/index";
