@@ -309,6 +309,13 @@ input:focus {
   flex: 1;
 }
 
+.board-grid-loader {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
 .board-cell {
   position: relative;
   min-height: 96px;
@@ -335,26 +342,31 @@ input:focus {
 }
 
 .board-cell.completed {
-  background: linear-gradient(180deg, #fff6ef, #fff3ea);
-  border-color: #f1b391;
+  border-color: var(--border);
 }
 
-.cell-check-badge {
+/* Circular bingo token overlay */
+.cell-token {
   position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 22px;
-  height: 22px;
+  inset: 0;
+  margin: auto;
+  width: 50%;
+  height: 0;
+  padding-bottom: 50%;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
-  color: #fff;
-  font-size: 13px;
-  font-weight: 800;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background: radial-gradient(circle, rgba(126, 207, 160, 0.45) 0%, rgba(126, 207, 160, 0.25) 70%, transparent 100%);
+  border: 2px solid rgba(126, 207, 160, 0.5);
   pointer-events: none;
   z-index: 1;
+}
+
+.cell-done-label {
+  position: relative;
+  z-index: 1;
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #4a9e6e;
 }
 
 .board-cell.completed:hover .cell-hover-overlay {
@@ -382,12 +394,6 @@ input:focus {
   letter-spacing: 0.06em;
 }
 
-.cell-done-label {
-  margin-top: 6px;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--accent-strong);
-}
 
 .task-title {
   font-size: 14px;

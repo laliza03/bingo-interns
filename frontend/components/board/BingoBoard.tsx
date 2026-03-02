@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import {
   useSubmitActivity,
@@ -16,55 +16,73 @@ import type { Activity } from "@/types";
 
 export default function BingoBoard() {
   const { user } = useAuth();
-
-  const { submit: submitActivity, loading: submitting } = useSubmitActivity();
-  const { submissions } = useUserSubmissions(user?.id ?? null);
+  const { submit, loading: submitting } = useSubmitActivity();
+  const { submissions, refetch: refetchSubmissions } = useUserSubmissions(
+    user?.id ?? null,
+  );
   const {
     activities,
     loading: activitiesLoading,
     error: activitiesError,
   } = useActivities();
 
-  const displayActivities = activities.length > 0 ? activities : FALLBACK_TASKS;
   const [error, setError] = useState<string | null>(null);
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(
     null,
   );
+  // Optimistic set – instantly mark cells green before server round-trip confirms
+  const [optimisticIds, setOptimisticIds] = useState<Set<string>>(new Set());
 
+  const displayActivities = activities.length > 0 ? activities : FALLBACK_TASKS;
+
+  // Surface API errors as a toast
   useEffect(() => {
     if (activitiesError) setError(activitiesError);
   }, [activitiesError]);
 
-  // Auto-dismiss error toast after 4 seconds
+  // Auto-dismiss error toast after 4 s
   useEffect(() => {
     if (!error) return;
     const timer = setTimeout(() => setError(null), 4000);
     return () => clearTimeout(timer);
   }, [error]);
 
-  const completedActivityIds = useMemo<Set<string>>(
-    () => new Set(submissions?.map((s) => s.activity_id) ?? []),
-    [submissions],
-  );
+  // Merge server-known + optimistic completions
+  const completedActivityIds = useMemo<Set<string>>(() => {
+    const ids = new Set(submissions?.map((s) => s.activity_id) ?? []);
+    optimisticIds.forEach((id) => ids.add(id));
+    return ids;
+  }, [submissions, optimisticIds]);
 
   const completedCount = completedActivityIds.size;
 
-  const toggleTask = async (
-    activityId: string,
-    image: File | null,
-    _completed: boolean,
-  ): Promise<void> => {
-    if (!user) return;
-    try {
-      // TODO: upload image to backend/storage when supported
-      await submitActivity(user.id, activityId);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
-    }
-  };
+  const handleSubmit = useCallback(
+    async (activityId: string, _image: File | null): Promise<void> => {
+      if (!user) return;
+
+      // Optimistic update – mark cell green immediately
+      setOptimisticIds((prev) => new Set(prev).add(activityId));
+
+      try {
+        await submit(user.id, activityId);
+        // Sync with server so future renders use real data
+        refetchSubmissions();
+      } catch (err) {
+        // Roll back optimistic update on failure
+        setOptimisticIds((prev) => {
+          const next = new Set(prev);
+          next.delete(activityId);
+          return next;
+        });
+        setError(err instanceof Error ? err.message : "Something went wrong");
+      }
+    },
+    [user, submit, refetchSubmissions],
+  );
 
   return (
     <section className="board-card board-card-main">
+      {/* Error toast */}
       {error &&
         createPortal(
           <div className="toast-error">
@@ -75,6 +93,8 @@ export default function BingoBoard() {
           </div>,
           document.body,
         )}
+
+      {/* Header */}
       <div className="board-header">
         <div>
           <p className="eyebrow">GLOW BINGO</p>
@@ -85,40 +105,30 @@ export default function BingoBoard() {
         </div>
       </div>
 
+      {/* Grid */}
       {activitiesLoading ? (
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            minHeight: "400px",
-          }}
-        >
+        <div className="board-grid-loader">
           <LoadingSpinner message="Loading activities…" size="lg" />
         </div>
       ) : (
         <div className="board-grid">
-          {displayActivities.map((activity) => {
-            const done = completedActivityIds.has(activity.id);
-            return (
-              <BingoCell
-                key={activity.id}
-                activity={activity}
-                done={done}
-                disabled={submitting}
-                onClick={() => setSelectedActivity(activity)}
-              />
-            );
-          })}
+          {displayActivities.map((activity) => (
+            <BingoCell
+              key={activity.id}
+              activity={activity}
+              done={completedActivityIds.has(activity.id)}
+              disabled={submitting}
+              onClick={() => setSelectedActivity(activity)}
+            />
+          ))}
         </div>
       )}
 
-      <div style={{ marginTop: "16px", textAlign: "center" }}></div>
-
+      {/* Activity detail modal */}
       {selectedActivity && (
         <ActivityModal
           activity={selectedActivity}
-          onSubmit={toggleTask}
+          onSubmit={handleSubmit}
           onClose={() => setSelectedActivity(null)}
         />
       )}

@@ -6,14 +6,17 @@ import type { Activity } from "@/types";
 
 interface ActivityModalProps {
   activity: Activity;
-  onSubmit: (activityId: string, image: File | null, completed: boolean) => Promise<void>;
+  onSubmit: (activityId: string, image: File | null) => Promise<void>;
   onClose: () => void;
 }
 
-export default function ActivityModal({ activity, onSubmit, onClose }: ActivityModalProps) {
+export default function ActivityModal({
+  activity,
+  onSubmit,
+  onClose,
+}: ActivityModalProps) {
   const [image, setImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
-  const [completed, setCompleted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -43,15 +46,10 @@ export default function ActivityModal({ activity, onSubmit, onClose }: ActivityM
       return;
     }
 
-    if (!completed) {
-      setError("Please mark the activity as completed.");
-      return;
-    }
-
     setError(null);
     setLoading(true);
     try {
-      await onSubmit(activity.id, image, completed);
+      await onSubmit(activity.id, image);
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Submission failed");
@@ -66,7 +64,11 @@ export default function ActivityModal({ activity, onSubmit, onClose }: ActivityM
         {/* Header */}
         <div className="modal-header">
           <h2 className="modal-title">{activity.title}</h2>
-          <button className="modal-close-btn" onClick={onClose} aria-label="Close">
+          <button
+            className="modal-close-btn"
+            onClick={onClose}
+            aria-label="Close"
+          >
             ×
           </button>
         </div>
@@ -83,10 +85,17 @@ export default function ActivityModal({ activity, onSubmit, onClose }: ActivityM
               <label htmlFor="activity-image">
                 Upload image <span className="modal-required">*required</span>
               </label>
-              <div className="modal-file-zone" onClick={() => fileInputRef.current?.click()}>
+              <div
+                className="modal-file-zone"
+                onClick={() => fileInputRef.current?.click()}
+              >
                 {preview ? (
                   <div className="modal-preview-wrapper">
-                    <img src={preview} alt="Preview" className="modal-preview-img" />
+                    <img
+                      src={preview}
+                      alt="Preview"
+                      className="modal-preview-img"
+                    />
                     <button
                       type="button"
                       className="modal-preview-remove"
@@ -116,7 +125,7 @@ export default function ActivityModal({ activity, onSubmit, onClose }: ActivityM
             </div>
           )}
 
-          {/* Completed checkbox */}
+          {/* Completed checkbox
           <label className="modal-checkbox-label">
             <input
               type="checkbox"
@@ -125,11 +134,15 @@ export default function ActivityModal({ activity, onSubmit, onClose }: ActivityM
               className="modal-checkbox"
             />
             <span>I have completed this activity</span>
-          </label>
+          </label> */}
 
           {/* Submit */}
-          <button className="btn btn-primary modal-submit-btn" type="submit" disabled={loading}>
-            {loading ? "Submitting…" : "Submit"}
+          <button
+            className="btn btn-primary modal-submit-btn"
+            type="submit"
+            disabled={loading}
+          >
+            {loading ? "Submitting…" : "Complete Activity"}
           </button>
         </form>
       </div>
