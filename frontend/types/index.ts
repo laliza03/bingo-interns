@@ -15,15 +15,12 @@ export interface Activity {
   id: string;
   title: string;
   description: string;
-  requiresImage: boolean;
-  completed: boolean;
-  image: File | null;
+  isImageRequired: boolean;
 }
 
 export interface Submission {
   id?: string;
   user_id: string;
   activity_id: string;
-  image_url?: string;
   created_at?: string;
 }

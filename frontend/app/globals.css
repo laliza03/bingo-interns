@@ -895,7 +895,8 @@ input:focus {
   transition: border-color 0.15s ease, background 0.15s ease;
 }
 
-.modal-file-zone:hover {
+.modal-file-zone:hover,
+.modal-file-zone.drag-over {
   border-color: var(--accent);
   background: var(--pill);
 }

@@ -57,18 +57,21 @@ export default function BingoBoard() {
   const completedCount = completedActivityIds.size;
 
   const handleSubmit = useCallback(
-    async (activityId: string, _image: File | null): Promise<void> => {
+    async (activityId: string, image: File | null): Promise<void> => {
       if (!user) return;
 
-      // Optimistic update – mark cell green immediately
       setOptimisticIds((prev) => new Set(prev).add(activityId));
 
       try {
+        if (image) {
+          const { uploadSubmissionImage } =
+            await import("@/lib/api/submissions");
+          await uploadSubmissionImage(user.id, activityId, image);
+        }
+
         await submit(user.id, activityId);
-        // Sync with server so future renders use real data
         refetchSubmissions();
       } catch (err) {
-        // Roll back optimistic update on failure
         setOptimisticIds((prev) => {
           const next = new Set(prev);
           next.delete(activityId);

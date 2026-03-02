@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import type { Activity } from "@/types";
 
@@ -19,29 +19,50 @@ export default function ActivityModal({
   const [preview, setPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [dragging, setDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] ?? null;
+  const pickFile = (file: File | null) => {
     setImage(file);
-    if (file) {
-      const url = URL.createObjectURL(file);
-      setPreview(url);
-    } else {
-      setPreview(null);
-    }
+    setPreview(file ? URL.createObjectURL(file) : null);
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    pickFile(e.target.files?.[0] ?? null);
   };
 
   const handleRemoveImage = () => {
-    setImage(null);
-    setPreview(null);
+    pickFile(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
+
+  // ---- Drag & drop handlers ----
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragging(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type.startsWith("image/")) {
+      pickFile(file);
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (activity.requiresImage && !image) {
+    if (activity.isImageRequired && !image) {
       setError("This activity requires an image.");
       return;
     }
@@ -80,14 +101,17 @@ export default function ActivityModal({
           {error && <p className="form-error">{error}</p>}
 
           {/* Image upload */}
-          {activity.requiresImage && (
+          {activity.isImageRequired && (
             <div className="modal-field">
               <label htmlFor="activity-image">
                 Upload image <span className="modal-required">*required</span>
               </label>
               <div
-                className="modal-file-zone"
+                className={`modal-file-zone${dragging ? " drag-over" : ""}`}
                 onClick={() => fileInputRef.current?.click()}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
               >
                 {preview ? (
                   <div className="modal-preview-wrapper">
@@ -110,7 +134,7 @@ export default function ActivityModal({
                 ) : (
                   <div className="modal-file-placeholder">
                     <span className="modal-file-icon">📷</span>
-                    <span>Click to upload an image</span>
+                    <span>Click or drag an image here</span>
                   </div>
                 )}
               </div>
