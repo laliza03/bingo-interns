@@ -13,8 +13,7 @@ router = APIRouter()
 
 class LeaderboardEntry(BaseModel):
     user_id: uuid_pkg.UUID
-    email: str
-    total_points: int
+    name: str | None = None
     completed_activities: int
     rank: int
 
@@ -40,18 +39,16 @@ def get_top_users(
     limit: int = 5,
     session: Session = Depends(get_session)
 ):
-    # Get approved submissions with activity points
+    # Rank users by number of submissions (completed activities)
     statement = (
         select(
             Profile.id,
-            Profile.email,
-            func.sum(Activity.points).label("total_points"),
+            Profile.name,
             func.count(Submission.id).label("completed_activities")
         )
         .join(Submission, Profile.id == Submission.user_id)
-        .join(Activity, Submission.activity_id == Activity.id)
-        .group_by(Profile.id, Profile.email)
-        .order_by(func.sum(Activity.points).desc())
+        .group_by(Profile.id, Profile.name)
+        .order_by(func.count(Submission.id).desc())
         .limit(limit)
     )
     
@@ -60,12 +57,11 @@ def get_top_users(
     leaderboard = [
         LeaderboardEntry(
             user_id=user_id,
-            email=email,
-            total_points=total_points or 0,
+            name=name,
             completed_activities=completed_activities or 0,
             rank=idx + 1
         )
-        for idx, (user_id, email, total_points, completed_activities) in enumerate(results)
+        for idx, (user_id, name, completed_activities) in enumerate(results)
     ]
     
     return leaderboard

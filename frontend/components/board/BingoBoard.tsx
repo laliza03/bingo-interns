@@ -98,7 +98,9 @@ export default function BingoBoard() {
       <div className="board-header">
         <div>
           <p className="eyebrow">GLOW BINGO</p>
-          <h2>My Activity Board</h2>
+          <h2>
+            {user?.name ? `${user.name}'s Activity Board` : "My Activity Board"}
+          </h2>
         </div>
         <div className="progress-pill progress-pill-compact">
           {completedCount}/25 complete

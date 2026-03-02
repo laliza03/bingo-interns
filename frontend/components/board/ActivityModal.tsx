@@ -125,17 +125,6 @@ export default function ActivityModal({
             </div>
           )}
 
-          {/* Completed checkbox
-          <label className="modal-checkbox-label">
-            <input
-              type="checkbox"
-              checked={completed}
-              onChange={(e) => setCompleted(e.target.checked)}
-              className="modal-checkbox"
-            />
-            <span>I have completed this activity</span>
-          </label> */}
-
           {/* Submit */}
           <button
             className="btn btn-primary modal-submit-btn"

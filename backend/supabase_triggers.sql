@@ -10,7 +10,8 @@
 CREATE TABLE IF NOT EXISTS public.profiles (
     id UUID NOT NULL PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    email TEXT UNIQUE NOT NULL
+    email TEXT UNIQUE NOT NULL,
+    name TEXT
 );
 
 -- ============================================

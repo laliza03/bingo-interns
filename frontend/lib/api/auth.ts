@@ -17,6 +17,7 @@ function toAppUser(su: SupabaseUser): User {
   return {
     id: su.id,
     email: su.email ?? "",
+    name: (su.user_metadata?.name as string) ?? undefined,
   };
 }
 
@@ -25,18 +26,43 @@ function requireClient() {
   return supabase;
 }
 
+/** Sync the user profile (id, email, name) to the backend */
+async function syncProfileToBackend(user: User): Promise<void> {
+  try {
+    await fetch(`${API_BASE_URL}/users/sync`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: user.id,
+        email: user.email,
+        name: user.name ?? null,
+      }),
+    });
+  } catch {
+    // best-effort — don't block auth flow if backend is unreachable
+  }
+}
+
 export async function registerUser(
   email: string,
   password: string,
+  name?: string,
 ): Promise<User> {
   const client = requireClient();
-  const { data, error } = await client.auth.signUp({ email, password });
+  const { data, error } = await client.auth.signUp({
+    email,
+    password,
+    options: { data: { name } },
+  });
 
   if (error) throw new Error(error.message);
   if (!data.user) throw new Error("Registration failed — no user returned");
 
   const user = toAppUser(data.user);
-  //   await syncProfileToBackend(user);
+
+  // Sync profile (including name) to the backend
+  await syncProfileToBackend(user);
+
   return user;
 }
 
@@ -54,7 +80,10 @@ export async function loginUser(
   if (!data.user) throw new Error("Login failed — no user returned");
 
   const user = toAppUser(data.user);
-  //   await syncProfileToBackend(user);
+
+  // Sync profile to the backend
+  await syncProfileToBackend(user);
+
   return user;
 }
 
