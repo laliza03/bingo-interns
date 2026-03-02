@@ -24,8 +24,6 @@ export default function BingoCell({
       disabled={disabled}
     >
       <p className="task-title">{activity.title}</p>
-      {done && <span className="cell-done-label">✓ Done</span>}
-      {done && <div className="cell-token" />}
       <div className="cell-hover-overlay">
         <span>Open</span>
       </div>

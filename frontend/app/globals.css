@@ -342,27 +342,11 @@ input:focus {
 }
 
 .board-cell.completed {
+  background: #d4edda;
   border-color: var(--border);
 }
 
-/* Circular bingo token overlay */
-.cell-token {
-  position: absolute;
-  inset: 0;
-  margin: auto;
-  width: 50%;
-  height: 0;
-  padding-bottom: 50%;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(126, 207, 160, 0.45) 0%, rgba(126, 207, 160, 0.25) 70%, transparent 100%);
-  border: 2px solid rgba(126, 207, 160, 0.5);
-  pointer-events: none;
-  z-index: 1;
-}
-
 .cell-done-label {
-  position: relative;
-  z-index: 1;
   margin-top: 4px;
   font-size: 12px;
   font-weight: 700;
