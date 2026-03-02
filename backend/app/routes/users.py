@@ -6,52 +6,6 @@ import uuid as uuid_pkg
 
 router = APIRouter()
 
-
-@router.post(
-    "/users/sync",
-    response_model=UserResponse,
-    status_code=status.HTTP_200_OK,
-    summary="Sync user profile",
-    description=(
-        "Upserts a profile row for a Supabase-authenticated user.\n\n"
-        "Call this immediately after Supabase sign-up or sign-in so that all "
-        "backend tables that reference `profiles.id` remain consistent.\n\n"
-        "- If the profile already exists by `id`, the email is updated if it changed.\n"
-        "- If the `id` is new but the email belongs to a different profile, a **409** is returned."
-    ),
-    response_description="The created or updated user profile",
-    responses={
-        200: {"description": "Profile already existed and was returned (or email was updated)"},
-        201: {"description": "New profile created"},
-        409: {"description": "Email already registered to a different user ID"},
-    },
-)
-def sync_user_profile(user_data: UserSync, session: Session = Depends(get_session)):
-    existing_by_id = session.get(Profile, user_data.id)
-    if existing_by_id:
-        if existing_by_id.email != user_data.email:
-            existing_by_id.email = user_data.email
-            session.add(existing_by_id)
-            session.commit()
-            session.refresh(existing_by_id)
-        return existing_by_id
-
-    existing_by_email = session.exec(
-        select(Profile).where(Profile.email == user_data.email)
-    ).first()
-    if existing_by_email and existing_by_email.id != user_data.id:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Email already exists for another profile",
-        )
-
-    new_profile = Profile(id=user_data.id, email=user_data.email)
-    session.add(new_profile)
-    session.commit()
-    session.refresh(new_profile)
-    return new_profile
-
-
 @router.get(
     "/users/{user_id}",
     response_model=UserResponse,

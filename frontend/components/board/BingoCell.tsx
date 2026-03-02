@@ -1,15 +1,20 @@
 "use client";
 
-import type { Activity } from "@/types";
+import type { Activity, DBActivity } from "@/types";
 
 interface BingoCellProps {
-  activity: Activity;
+  activity: DBActivity;
   done: boolean;
   disabled: boolean;
   onClick: () => void;
 }
 
-export default function BingoCell({ activity, done, disabled, onClick }: BingoCellProps) {
+export default function BingoCell({
+  activity,
+  done,
+  disabled,
+  onClick,
+}: BingoCellProps) {
   return (
     <button
       type="button"

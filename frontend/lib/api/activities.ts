@@ -2,12 +2,12 @@
  * lib/api/activities.ts
  */
 
-import type { Activity } from "@/types";
+import type { Activity, DBActivity } from "@/types";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api";
 
-export async function getActivities(): Promise<Activity[]> {
+export async function getActivities(): Promise<DBActivity[]> {
   const response = await fetch(`${API_BASE_URL}/activities`);
   if (!response.ok) throw new Error("Failed to fetch activities");
   return response.json();

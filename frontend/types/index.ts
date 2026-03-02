@@ -10,6 +10,15 @@ export interface User {
   email: string;
 }
 
+export interface DBActivity {
+  id: string;
+  title: string;
+  description: string;
+  isImageRequired: boolean;
+  created_at: string;
+  index: number;
+}
+
 export interface Activity {
   id: string;
   title: string;

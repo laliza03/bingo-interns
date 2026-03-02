@@ -25,7 +25,8 @@ class ActivityResponse(SQLModel):
     created_at: datetime
     title: str
     description: str
-    points: int
+    isImageRequired: bool
+    index: Optional[int] = None
 
 
 class Submission(SQLModel, table=True):

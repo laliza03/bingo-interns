@@ -11,7 +11,7 @@ import {
 import { FALLBACK_TASKS } from "@/constants/tasks";
 import BingoCell from "./BingoCell";
 import ActivityModal from "./ActivityModal";
-import type { Activity } from "@/types";
+import type { Activity, DBActivity } from "@/types";
 
 export default function BingoBoard() {
   const { user } = useAuth();
@@ -26,7 +26,7 @@ export default function BingoBoard() {
 
   const displayActivities = activities.length > 0 ? activities : FALLBACK_TASKS;
   const [error, setError] = useState<string | null>(null);
-  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(
+  const [selectedActivity, setSelectedActivity] = useState<DBActivity | null>(
     null,
   );
 
