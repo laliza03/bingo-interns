@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useAuth, useLeaderboard } from "@/lib/hooks";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
@@ -12,7 +13,14 @@ const RANK_CLASS: Record<number, string> = {
 
 export default function Leaderboard() {
   const { user } = useAuth();
-  const { entries, loading } = useLeaderboard(5);
+  const { entries, loading, refetch } = useLeaderboard(5);
+
+  // Auto-refresh when a submission is completed on the board
+  useEffect(() => {
+    const handler = () => refetch();
+    window.addEventListener("submission-completed", handler);
+    return () => window.removeEventListener("submission-completed", handler);
+  }, [refetch]);
 
   const TOTAL = 25;
 
@@ -24,9 +32,7 @@ export default function Leaderboard() {
           <p className="eyebrow">GLOW BINGO</p>
           <h2>Leaderboard</h2>
         </div>
-        {!loading && (
-          <div className="progress-pill">{entries.length} interns</div>
-        )}
+        {!loading && <div className="progress-pill">{entries.length} interns</div>}
       </div>
 
       {loading ? (
@@ -48,16 +54,11 @@ export default function Leaderboard() {
           {/* Top 3 Podium */}
           <div className="podium">
             {entries.slice(0, 3).map((entry) => {
-              const pct = Math.round(
-                (entry.completed_activities / TOTAL) * 100,
-              );
+              const pct = Math.round((entry.completed_activities / TOTAL) * 100);
               const isMe = entry.user_id === user?.id;
               const displayName = entry.name || "Anonymous";
               return (
-                <div
-                  key={entry.user_id}
-                  className={`podium-card podium-${entry.rank}${isMe ? " is-me" : ""}`}
-                >
+                <div key={entry.user_id} className={`podium-card podium-${entry.rank}${isMe ? " is-me" : ""}`}>
                   <span className="podium-medal">{MEDAL[entry.rank]}</span>
                   <p className="podium-name">
                     {displayName}
@@ -77,9 +78,7 @@ export default function Leaderboard() {
           {/* Full Ranking List */}
           <div className="lb-list">
             {entries.map((entry) => {
-              const pct = Math.round(
-                (entry.completed_activities / TOTAL) * 100,
-              );
+              const pct = Math.round((entry.completed_activities / TOTAL) * 100);
               const isMe = entry.user_id === user?.id;
               const displayName = entry.name || "Anonymous";
               return (
