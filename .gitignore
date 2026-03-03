@@ -2,10 +2,12 @@
 .env
 .env.local
 .env.*.local
+backend/.env
 
 # Dependencies
 node_modules/
 venv/
+.venv/
 __pycache__/
 *.pyc
 

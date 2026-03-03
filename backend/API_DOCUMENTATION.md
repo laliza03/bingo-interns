@@ -1,6 +1,7 @@
 # Bingo App - Backend API Documentation
 
 ## Overview
+
 Complete REST API for a Bingo challenge application with image submissions, 25-box boards, and leaderboards.
 
 **Base URL**: `http://localhost:8000`  
@@ -10,19 +11,23 @@ Complete REST API for a Bingo challenge application with image submissions, 25-b
 
 ## 🔐 User Management
 
-### Create New User Account
+### Sync Supabase User Profile
+
 ```http
-POST /api/users/register
+POST /api/users/sync
 ```
+
 **Request Body:**
+
 ```json
 {
-  "email": "user@example.com",
-  "password": "securePassword123"
+  "id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+  "email": "user@example.com"
 }
 ```
 
 ### Get User by ID
+
 ```http
 GET /api/users/{user_id}
 ```
@@ -32,10 +37,13 @@ GET /api/users/{user_id}
 ## 🎯 Activities Management
 
 ### Create Activity
+
 ```http
 POST /api/activities
 ```
+
 **Request Body:**
+
 ```json
 {
   "title": "Take a selfie with a tree",
@@ -45,20 +53,25 @@ POST /api/activities
 ```
 
 ### Get All Activities
+
 ```http
 GET /api/activities
 ```
 
 ### Get Single Activity
+
 ```http
 GET /api/activities/{activity_id}
 ```
 
 ### Update Activity
+
 ```http
 PUT /api/activities/{activity_id}
 ```
+
 **Request Body:**
+
 ```json
 {
   "title": "Updated title",
@@ -67,6 +80,7 @@ PUT /api/activities/{activity_id}
 ```
 
 ### Delete Activity
+
 ```http
 DELETE /api/activities/{activity_id}
 ```
@@ -76,10 +90,13 @@ DELETE /api/activities/{activity_id}
 ## 📸 Submissions (Image Proof)
 
 ### Submit Activity Completion
+
 ```http
 POST /api/submissions
 ```
+
 **Request Body:**
+
 ```json
 {
   "user_id": "uuid-here",
@@ -90,23 +107,28 @@ POST /api/submissions
 ```
 
 ### Get User's Submissions
+
 ```http
 GET /api/submissions/user/{user_id}
 ```
 
 ### Get Activity's Submissions
+
 ```http
 GET /api/submissions/activity/{activity_id}
 ```
 
 ### Approve/Reject Submission
+
 ```http
 PATCH /api/submissions/{submission_id}/status
 ```
+
 **Request Body:**
+
 ```json
 {
-  "status": "approved"  // or "rejected" or "pending"
+  "status": "approved" // or "rejected" or "pending"
 }
 ```
 
@@ -115,10 +137,13 @@ PATCH /api/submissions/{submission_id}/status
 ## 🎲 Bingo Boards (25 Boxes)
 
 ### Create Bingo Board
+
 ```http
 POST /api/boards
 ```
+
 **Request Body:**
+
 ```json
 {
   "title": "Summer Challenge 2026",
@@ -128,24 +153,31 @@ POST /api/boards
   ]
 }
 ```
+
 **Note:** Must provide exactly 25 activity IDs
 
 ### Get All Boards
+
 ```http
 GET /api/boards?active_only=true
 ```
 
 ### Get Board with Activities
+
 ```http
 GET /api/boards/{board_id}
 ```
+
 **Response includes activities in order (positions 0-24)**
 
 ### Get User Progress on Board
+
 ```http
 GET /api/boards/{board_id}/progress/{user_id}
 ```
+
 **Response:**
+
 ```json
 {
   "board_id": "uuid",
@@ -158,14 +190,18 @@ GET /api/boards/{board_id}/progress/{user_id}
 ```
 
 ### Mark Activity Complete on Board
+
 ```http
 POST /api/boards/{board_id}/complete?user_id={user_id}&activity_id={activity_id}&submission_id={submission_id}
 ```
+
 **Requirements:**
+
 - Submission must exist and be approved
 - Links user's approved submission to board progress
 
 ### Activate/Deactivate Board
+
 ```http
 PATCH /api/boards/{board_id}?is_active=false
 ```
@@ -175,10 +211,13 @@ PATCH /api/boards/{board_id}?is_active=false
 ## 🏆 Leaderboard & Statistics
 
 ### Get Top 5 Winners
+
 ```http
 GET /api/leaderboard/top?limit=5
 ```
+
 **Response:**
+
 ```json
 [
   {
@@ -193,15 +232,19 @@ GET /api/leaderboard/top?limit=5
 ```
 
 ### Get Board-Specific Leaderboard
+
 ```http
 GET /api/leaderboard/board/{board_id}?limit=5
 ```
 
 ### Get User Statistics
+
 ```http
 GET /api/stats/user/{user_id}
 ```
+
 **Response:**
+
 ```json
 {
   "user_id": "uuid",
@@ -215,10 +258,13 @@ GET /api/stats/user/{user_id}
 ```
 
 ### Get Global Statistics
+
 ```http
 GET /api/stats/global
 ```
+
 **Response:**
+
 ```json
 {
   "total_users": 156,
@@ -235,25 +281,30 @@ GET /api/stats/global
 
 ## 🔄 Typical Workflow
 
-### 1. User Registration
+### 1. User Sign-up via Supabase
+
 ```
-POST /api/users/register
-→ User creates account
+Supabase Auth sign-up/sign-in
+→ POST /api/users/sync
+→ Ensure backend profile row exists
 ```
 
 ### 2. Admin Creates Activities
+
 ```
 POST /api/activities (x25)
 → Create 25 different activities
 ```
 
 ### 3. Admin Creates Bingo Board
+
 ```
 POST /api/boards
 → Link the 25 activities to a board
 ```
 
 ### 4. User Completes Activity
+
 ```
 1. User uploads image to storage (Supabase Storage, Cloudinary, etc.)
 2. POST /api/submissions (with image_url)
@@ -263,6 +314,7 @@ POST /api/boards
 ```
 
 ### 5. View Leaderboard
+
 ```
 GET /api/leaderboard/top
 → See top 5 winners
@@ -273,11 +325,13 @@ GET /api/leaderboard/top
 ## 📊 Database Schema Summary
 
 ### Existing Tables (Supabase)
+
 - `profiles` - User accounts
 - `activities` - Individual challenges
 - `submissions` - User proof submissions
 
 ### New Tables (Run migration.sql)
+
 - `bingo_boards` - 25-activity boards
 - `bingo_board_activities` - Activity positions on boards
 - `user_board_progress` - User completion tracking
@@ -287,6 +341,7 @@ GET /api/leaderboard/top
 ## 🚀 Quick Start
 
 1. **Install dependencies:**
+
    ```bash
    pip install -r requirements.txt
    ```
@@ -298,6 +353,7 @@ GET /api/leaderboard/top
    Execute `database_migration.sql` in Supabase SQL Editor
 
 4. **Start server:**
+
    ```bash
    python -m uvicorn app.main:app --reload
    ```

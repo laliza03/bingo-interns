@@ -9,6 +9,14 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
     raise ValueError("DATABASE_URL is missing!")
 
+# SQLAlchemy requires 'postgresql+psycopg://' to use the psycopg v3 driver.
+# Supabase and most tools give you a plain 'postgresql://' URL, so we
+# normalise it here so either form works in the .env file.
+if DATABASE_URL.startswith("postgresql://") or DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+psycopg://", 1).replace(
+        "postgresql://", "postgresql+psycopg://", 1
+    )
+
 # Supabase uses PostgreSQL
 engine = create_engine(
     DATABASE_URL,

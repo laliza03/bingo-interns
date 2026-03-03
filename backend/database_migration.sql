@@ -46,8 +46,16 @@ CREATE INDEX IF NOT EXISTS idx_board_activities_position ON bingo_board_activiti
 CREATE INDEX IF NOT EXISTS idx_user_progress_user ON user_board_progress(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_progress_board ON user_board_progress(board_id);
 CREATE INDEX IF NOT EXISTS idx_user_progress_user_board ON user_board_progress(user_id, board_id);
-CREATE INDEX IF NOT EXISTS idx_submissions_status ON submissions(status);
 CREATE INDEX IF NOT EXISTS idx_submissions_user_activity ON submissions(user_id, activity_id);
+
+-- Drop status column if it exists (no longer used)
+ALTER TABLE submissions DROP COLUMN IF EXISTS status;
+
+-- Make image_url nullable (not all activities require an image)
+ALTER TABLE submissions ALTER COLUMN image_url DROP NOT NULL;
+
+-- Drop image_url column (no longer used)
+ALTER TABLE submissions DROP COLUMN IF EXISTS image_url;
 
 -- ============================================
 -- ADD COMMENTS FOR DOCUMENTATION
