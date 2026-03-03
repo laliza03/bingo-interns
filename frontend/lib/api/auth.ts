@@ -9,8 +9,7 @@ import { supabase } from "@/lib/supabaseClient";
 import type { User } from "@/types";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 /** Map a Supabase user object to our app's User shape */
 function toAppUser(su: SupabaseUser): User {
@@ -29,7 +28,7 @@ function requireClient() {
 /** Sync the user profile (id, email, name) to the backend */
 async function syncProfileToBackend(user: User): Promise<void> {
   try {
-    await fetch(`${API_BASE_URL}/users/sync`, {
+    await fetch(`${API_BASE_URL}/api/users/sync`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -43,11 +42,7 @@ async function syncProfileToBackend(user: User): Promise<void> {
   }
 }
 
-export async function registerUser(
-  email: string,
-  password: string,
-  name?: string,
-): Promise<User> {
+export async function registerUser(email: string, password: string, name?: string): Promise<User> {
   const client = requireClient();
   const { data, error } = await client.auth.signUp({
     email,
@@ -66,10 +61,7 @@ export async function registerUser(
   return user;
 }
 
-export async function loginUser(
-  email: string,
-  password: string,
-): Promise<User> {
+export async function loginUser(email: string, password: string): Promise<User> {
   const client = requireClient();
   const { data, error } = await client.auth.signInWithPassword({
     email,
