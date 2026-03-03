@@ -43,6 +43,29 @@ export default function BingoBoard() {
 
   const completedCount = completedActivityIds.size;
 
+  // ── Bingo line detection (rows, columns, diagonals) ──
+  const [bingoDismissed, setBingoDismissed] = useState(false);
+
+  const hasBingo = useMemo(() => {
+    if (displayActivities.length < 25) return false;
+    // Build a set of grid positions (0-24) that are completed
+    const donePositions = new Set<number>();
+    displayActivities.forEach((a, i) => {
+      if (completedActivityIds.has(a.id)) donePositions.add(i);
+    });
+
+    const lines: number[][] = [];
+    // 5 rows
+    for (let r = 0; r < 5; r++) lines.push([0, 1, 2, 3, 4].map((c) => r * 5 + c));
+    // 5 columns
+    for (let c = 0; c < 5; c++) lines.push([0, 1, 2, 3, 4].map((r) => r * 5 + c));
+    // 2 diagonals
+    lines.push([0, 6, 12, 18, 24]);
+    lines.push([4, 8, 12, 16, 20]);
+
+    return lines.some((line) => line.every((pos) => donePositions.has(pos)));
+  }, [displayActivities, completedActivityIds]);
+
   const handleSubmit = useCallback(
     async (activityId: string, image: File | null): Promise<void> => {
       if (!user) return;
@@ -84,6 +107,19 @@ export default function BingoBoard() {
           document.body,
         )}
 
+      {/* Bingo banner */}
+      {hasBingo &&
+        !bingoDismissed &&
+        createPortal(
+          <div className="bingo-banner">
+            <span>🎉 Congratulations! Send a message to Liza to receive your prize!</span>
+            <button className="bingo-banner-close" onClick={() => setBingoDismissed(true)}>
+              ×
+            </button>
+          </div>,
+          document.body,
+        )}
+
       {/* Header */}
       <div className="board-header">
         <div>
@@ -95,9 +131,7 @@ export default function BingoBoard() {
 
       {/* Grid */}
       {activitiesLoading ? (
-        <div className="board-grid-loader">
-          <LoadingSpinner message="Loading activities…" size="lg" />
-        </div>
+        <LoadingSpinner message="Loading activities…" size="lg" />
       ) : (
         <div className="board-grid">
           {displayActivities.map((activity) => (

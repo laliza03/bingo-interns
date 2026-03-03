@@ -39,16 +39,21 @@ def get_top_users(
     limit: int = 5,
     session: Session = Depends(get_session)
 ):
-    # Rank users by number of submissions (completed activities)
+    # Rank users by number of submissions (completed activities).
+    # On a tie, the user whose latest submission is oldest wins (finished first).
     statement = (
         select(
             Profile.id,
             Profile.name,
-            func.count(Submission.id).label("completed_activities")
+            func.count(Submission.id).label("completed_activities"),
+            func.max(Submission.created_at).label("last_submission_at"),
         )
         .join(Submission, Profile.id == Submission.user_id)
         .group_by(Profile.id, Profile.name)
-        .order_by(func.count(Submission.id).desc())
+        .order_by(
+            func.count(Submission.id).desc(),
+            func.max(Submission.created_at).asc(),
+        )
         .limit(limit)
     )
     
@@ -61,7 +66,7 @@ def get_top_users(
             completed_activities=completed_activities or 0,
             rank=idx + 1
         )
-        for idx, (user_id, name, completed_activities) in enumerate(results)
+        for idx, (user_id, name, completed_activities, _last_sub) in enumerate(results)
     ]
     
     return leaderboard

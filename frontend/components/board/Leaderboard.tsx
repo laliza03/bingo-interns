@@ -36,9 +36,7 @@ export default function Leaderboard() {
       </div>
 
       {loading ? (
-        <div className="board-grid-loader">
-          <LoadingSpinner message="Loading leaderboard…" size="md" />
-        </div>
+        <LoadingSpinner message="Loading leaderboard…" size="md" />
       ) : entries.length === 0 ? (
         <p
           style={{

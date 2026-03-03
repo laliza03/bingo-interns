@@ -18,10 +18,6 @@ export default function HomePage() {
   }, [loading, user, router]);
 
   if (loading) {
-    return (
-      <div className="loading-screen">
-        <LoadingSpinner message="Loading your board…" size="lg" />
-      </div>
-    );
+    return <LoadingSpinner message="Loading your board…" size="lg" />;
   }
 }
