@@ -47,8 +47,7 @@ POST /api/activities
 ```json
 {
   "title": "Take a selfie with a tree",
-  "description": "Find a tree and take a creative selfie",
-  "points": 10
+  "description": "Find a tree and take a creative selfie"
 }
 ```
 
@@ -74,8 +73,7 @@ PUT /api/activities/{activity_id}
 
 ```json
 {
-  "title": "Updated title",
-  "points": 15
+  "title": "Updated title"
 }
 ```
 
@@ -184,7 +182,6 @@ GET /api/boards/{board_id}/progress/{user_id}
   "board_title": "Summer Challenge 2026",
   "total_activities": 25,
   "completed_activities": 8,
-  "total_points": 120,
   "completed_positions": [0, 3, 5, 7, 12, 15, 18, 22]
 }
 ```
@@ -223,7 +220,6 @@ GET /api/leaderboard/top?limit=5
   {
     "user_id": "uuid",
     "email": "user@example.com",
-    "total_points": 450,
     "completed_activities": 32,
     "rank": 1
   },
@@ -249,7 +245,6 @@ GET /api/stats/user/{user_id}
 {
   "user_id": "uuid",
   "email": "user@example.com",
-  "total_points": 280,
   "completed_activities": 18,
   "approved_submissions": 18,
   "pending_submissions": 3,

@@ -1,7 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from sqlmodel import Session, text
 from contextlib import asynccontextmanager
+import os
 from app.db.connection import engine
 from app.routes import users, activities, leaderboard
 
@@ -35,7 +37,7 @@ tags_metadata = [
         "name": "leaderboard",
         "description": (
             "Leaderboard and statistics endpoints. "
-            "Returns ranked users by total points as well as per-user and global platform stats."
+            "Returns ranked users by completed activities as well as per-user and global platform stats."
         ),
     },
 ]
@@ -48,9 +50,9 @@ app = FastAPI(
         "Backend REST API powering the Bingo intern challenge game.\n\n"
         "### Features\n"
         "- **User sync** – keeps backend profiles in sync with Supabase Auth\n"
-        "- **Activities** – 25-cell bingo board challenges with point values\n"
+        "- **Activities** – 25-cell bingo board challenges\n"
         "- **Submissions** – image-proof submissions for completed activities\n"
-        "- **Leaderboard** – real-time ranking by points and per-board rankings\n\n"
+        "- **Leaderboard** – real-time ranking by completed activities and per-board rankings\n\n"
         "All IDs are UUIDs. Timestamps are UTC ISO-8601 strings."
     ),
     version="1.0.0",
@@ -64,10 +66,20 @@ app = FastAPI(
 )
 
 # Configure CORS for frontend
+_default_origins = [
+    "http://localhost:3000", "http://localhost:3001",
+    "http://127.0.0.1:3000", "http://127.0.0.1:3001",
+    "https://bingointerns.onrender.com",
+]
+_cors_origins_env = os.getenv("CORS_ORIGINS", "")
+cors_origins = (
+    [o.strip() for o in _cors_origins_env.split(",") if o.strip()]
+    if _cors_origins_env
+    else _default_origins
+)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:3001", "http://127.0.0.1:3000", "http://127.0.0.1:3001",
-                   "https://bingointerns.onrender.com"],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -109,6 +121,9 @@ def test_database():
             result = session.exec(text("SELECT 1")).scalar_one()
             return {"status": "healthy", "database_connection": "ok", "result": int(result)}
     except Exception as e:
-        return {"status": "unhealthy", "error": str(e)}
+        return JSONResponse(
+            status_code=503,
+            content={"status": "unhealthy", "error": str(e)},
+        )
 
 

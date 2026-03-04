@@ -1,23 +1,26 @@
-from sqlmodel import SQLModel, Field
+from sqlmodel import SQLModel, Field, UniqueConstraint
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid as uuid_pkg
+
+
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc)
 
 
 class Activity(SQLModel, table=True):
     __tablename__ = "activities"
     
     id: uuid_pkg.UUID = Field(default_factory=uuid_pkg.uuid4, primary_key=True)
-    created_at: Optional[datetime] = Field(default_factory=datetime.utcnow)
+    created_at: Optional[datetime] = Field(default_factory=_utcnow)
     title: str
     description: str
     isImageRequired: bool = False
-    index: Optional[int] = None
+    index: Optional[int] = Field(default=None, index=True)
 
 class ActivityCreate(SQLModel):
     title: str
     description: str
-    points: int
 
 
 class ActivityResponse(SQLModel):
@@ -31,11 +34,14 @@ class ActivityResponse(SQLModel):
 
 class Submission(SQLModel, table=True):
     __tablename__ = "submissions"
+    __table_args__ = (
+        UniqueConstraint("user_id", "activity_id", name="uq_submission_user_activity"),
+    )
     
     id: uuid_pkg.UUID = Field(default_factory=uuid_pkg.uuid4, primary_key=True)
-    created_at: Optional[datetime] = Field(default_factory=datetime.utcnow)
+    created_at: Optional[datetime] = Field(default_factory=_utcnow)
     user_id: uuid_pkg.UUID = Field(foreign_key="profiles.id")
-    activity_id: uuid_pkg.UUID = Field(foreign_key="activities.id")
+    activity_id: uuid_pkg.UUID = Field(foreign_key="activities.id", index=True)
 
 
 class SubmissionCreate(SQLModel):

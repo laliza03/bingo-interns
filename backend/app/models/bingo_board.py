@@ -1,14 +1,18 @@
 from sqlmodel import SQLModel, Field, Relationship
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid as uuid_pkg
+
+
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc)
 
 
 class BingoBoard(SQLModel, table=True):
     __tablename__ = "bingo_boards"
     
     id: uuid_pkg.UUID = Field(default_factory=uuid_pkg.uuid4, primary_key=True)
-    created_at: Optional[datetime] = Field(default_factory=datetime.utcnow)
+    created_at: Optional[datetime] = Field(default_factory=_utcnow)
     title: str
     description: Optional[str] = None
     is_active: bool = Field(default=True)
@@ -31,7 +35,7 @@ class UserBoardProgress(SQLModel, table=True):
     board_id: uuid_pkg.UUID = Field(foreign_key="bingo_boards.id")
     activity_id: uuid_pkg.UUID = Field(foreign_key="activities.id")
     submission_id: uuid_pkg.UUID = Field(foreign_key="submissions.id")
-    completed_at: Optional[datetime] = Field(default_factory=datetime.utcnow)
+    completed_at: Optional[datetime] = Field(default_factory=_utcnow)
 
 
 # Request/Response Models
@@ -54,7 +58,6 @@ class BingoBoardActivityResponse(SQLModel):
     activity_id: uuid_pkg.UUID
     activity_title: str
     activity_description: str
-    activity_points: int
 
 
 class BingoBoardWithActivities(SQLModel):
@@ -71,5 +74,4 @@ class UserProgressResponse(SQLModel):
     board_title: str
     total_activities: int
     completed_activities: int
-    total_points: int
     completed_positions: List[int]

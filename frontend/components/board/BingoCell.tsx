@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import type { Activity } from "@/types";
 
 interface BingoCellProps {
@@ -9,12 +10,7 @@ interface BingoCellProps {
   onClick: () => void;
 }
 
-export default function BingoCell({
-  activity,
-  done,
-  disabled,
-  onClick,
-}: BingoCellProps) {
+function BingoCellInner({ activity, done, disabled, onClick }: BingoCellProps) {
   return (
     <button
       type="button"
@@ -30,3 +26,6 @@ export default function BingoCell({
     </button>
   );
 }
+
+const BingoCell = memo(BingoCellInner);
+export default BingoCell;
