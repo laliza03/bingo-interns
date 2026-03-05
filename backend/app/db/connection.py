@@ -20,7 +20,11 @@ if DATABASE_URL.startswith("postgresql://") or DATABASE_URL.startswith("postgres
 # Supabase uses PostgreSQL
 engine = create_engine(
     DATABASE_URL,
-    echo=True,
+    echo=False,
+    pool_size=10,
+    max_overflow=20,
+    pool_pre_ping=True,
+    pool_recycle=300,
 )
 
 

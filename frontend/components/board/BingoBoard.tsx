@@ -2,7 +2,12 @@
 
 import { useMemo, useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { useSubmitActivity, useUserSubmissions, useAuth, useActivities } from "@/lib/hooks";
+import {
+  useSubmitActivity,
+  useUserSubmissions,
+  useAuth,
+  useActivities,
+} from "@/lib/hooks";
 import { FALLBACK_TASKS } from "@/constants/tasks";
 import BingoCell from "./BingoCell";
 import ActivityModal from "./ActivityModal";
@@ -12,11 +17,20 @@ import type { Activity } from "@/types";
 export default function BingoBoard() {
   const { user } = useAuth();
   const { submit, loading: submitting } = useSubmitActivity();
-  const { submissions, refetch: refetchSubmissions } = useUserSubmissions(user?.id ?? null);
-  const { activities, loading: activitiesLoading, error: activitiesError } = useActivities();
+  const { submissions, refetch: refetchSubmissions } = useUserSubmissions(
+    user?.id ?? null,
+  );
+  const {
+    activities,
+    loading: activitiesLoading,
+    error: activitiesError,
+    refetch: refetchActivities,
+  } = useActivities();
 
   const [error, setError] = useState<string | null>(null);
-  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
+  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(
+    null,
+  );
   // Optimistic set – instantly mark cells green before server round-trip confirms
   const [optimisticIds, setOptimisticIds] = useState<Set<string>>(new Set());
 
@@ -56,15 +70,22 @@ export default function BingoBoard() {
 
     const lines: number[][] = [];
     // 5 rows
-    for (let r = 0; r < 5; r++) lines.push([0, 1, 2, 3, 4].map((c) => r * 5 + c));
+    for (let r = 0; r < 5; r++)
+      lines.push([0, 1, 2, 3, 4].map((c) => r * 5 + c));
     // 5 columns
-    for (let c = 0; c < 5; c++) lines.push([0, 1, 2, 3, 4].map((r) => r * 5 + c));
+    for (let c = 0; c < 5; c++)
+      lines.push([0, 1, 2, 3, 4].map((r) => r * 5 + c));
     // 2 diagonals
     lines.push([0, 6, 12, 18, 24]);
     lines.push([4, 8, 12, 16, 20]);
 
     return lines.some((line) => line.every((pos) => donePositions.has(pos)));
   }, [displayActivities, completedActivityIds]);
+
+  // Stable callback for opening the modal
+  const handleCellClick = useCallback((activity: Activity) => {
+    setSelectedActivity(activity);
+  }, []);
 
   const handleSubmit = useCallback(
     async (activityId: string, image: File | null): Promise<void> => {
@@ -74,12 +95,14 @@ export default function BingoBoard() {
 
       try {
         if (image) {
-          const { uploadSubmissionImage } = await import("@/lib/api/submissions");
+          const { uploadSubmissionImage } =
+            await import("@/lib/api/submissions");
           await uploadSubmissionImage(user.id, activityId, image);
         }
 
         await submit(user.id, activityId);
         refetchSubmissions();
+        refetchActivities();
         window.dispatchEvent(new Event("submission-completed"));
       } catch (err) {
         setOptimisticIds((prev) => {
@@ -90,7 +113,7 @@ export default function BingoBoard() {
         setError(err instanceof Error ? err.message : "Something went wrong");
       }
     },
-    [user, submit, refetchSubmissions],
+    [user, submit, refetchSubmissions, refetchActivities],
   );
 
   return (
@@ -112,8 +135,13 @@ export default function BingoBoard() {
         !bingoDismissed &&
         createPortal(
           <div className="bingo-banner">
-            <span>🎉 Congratulations! Send a message to Liza to receive your prize!</span>
-            <button className="bingo-banner-close" onClick={() => setBingoDismissed(true)}>
+            <span>
+              🎉 Congratulations! Send a message to Liza to receive your prize!
+            </span>
+            <button
+              className="bingo-banner-close"
+              onClick={() => setBingoDismissed(true)}
+            >
               ×
             </button>
           </div>,
@@ -124,9 +152,13 @@ export default function BingoBoard() {
       <div className="board-header">
         <div>
           <p className="eyebrow">GLOW BINGO</p>
-          <h2>{user?.name ? `${user.name}'s Activity Board` : "My Activity Board"}</h2>
+          <h2>
+            {user?.name ? `${user.name}'s Activity Board` : "My Activity Board"}
+          </h2>
         </div>
-        <div className="progress-pill progress-pill-compact">{completedCount}/25 complete</div>
+        <div className="progress-pill progress-pill-compact">
+          {completedCount}/25 complete
+        </div>
       </div>
 
       {/* Grid */}
@@ -140,7 +172,7 @@ export default function BingoBoard() {
               activity={activity}
               done={completedActivityIds.has(activity.id)}
               disabled={submitting}
-              onClick={() => setSelectedActivity(activity)}
+              onClick={() => handleCellClick(activity)}
             />
           ))}
         </div>
@@ -148,7 +180,11 @@ export default function BingoBoard() {
 
       {/* Activity detail modal */}
       {selectedActivity && (
-        <ActivityModal activity={selectedActivity} onSubmit={handleSubmit} onClose={() => setSelectedActivity(null)} />
+        <ActivityModal
+          activity={selectedActivity}
+          onSubmit={handleSubmit}
+          onClose={() => setSelectedActivity(null)}
+        />
       )}
     </section>
   );

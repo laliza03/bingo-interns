@@ -1,10 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { useAuth } from "@/lib/hooks";
-import Navbar from "@/components/layout/Navbar";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 interface MainLayoutProps {

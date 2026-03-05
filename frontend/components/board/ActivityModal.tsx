@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { createPortal } from "react-dom";
 import type { Activity } from "@/types";
 
@@ -22,10 +22,24 @@ export default function ActivityModal({
   const [dragging, setDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const pickFile = (file: File | null) => {
+  // Revoke the previous object URL to prevent memory leaks
+  const pickFile = useCallback((file: File | null) => {
+    setPreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return file ? URL.createObjectURL(file) : null;
+    });
     setImage(file);
-    setPreview(file ? URL.createObjectURL(file) : null);
-  };
+  }, []);
+
+  // Cleanup object URL on unmount
+  useEffect(() => {
+    return () => {
+      setPreview((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return null;
+      });
+    };
+  }, []);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     pickFile(e.target.files?.[0] ?? null);

@@ -13,6 +13,7 @@ Frontend (Next.js/React) ← API Calls → Backend (FastAPI)
 ## Structure des fichiers
 
 ### Frontend (`/frontend`)
+
 - `app/page.js` - Page principale avec authentification et board bingo
 - `app/layout.js` - Layout root
 - `app/globals.css` - Styles globaux pastel
@@ -21,6 +22,7 @@ Frontend (Next.js/React) ← API Calls → Backend (FastAPI)
 - `package.json` - Dépendances Next.js
 
 ### Backend (`/backend`)
+
 - `app/main.py` - Serveur FastAPI principal
 - `app/routes/users.py` - Endpoints auth (register, get user)
 - `app/routes/boards.py` - Endpoints bingo board
@@ -35,6 +37,7 @@ Frontend (Next.js/React) ← API Calls → Backend (FastAPI)
 ### 1. Backend (FastAPI)
 
 #### Prérequis
+
 - Python 3.10+
 - PostgreSQL installé ou compte Supabase
 
@@ -61,6 +64,7 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 Le serveur tourne sur `http://localhost:8000`
+
 - API: `http://localhost:8000/api/`
 - Docs: `http://localhost:8000/docs`
 - Health check: `http://localhost:8000/health`
@@ -68,6 +72,7 @@ Le serveur tourne sur `http://localhost:8000`
 ### 2. Frontend (Next.js)
 
 #### Prérequis
+
 - Node.js 18+
 - npm, yarn, ou pnpm
 
@@ -91,6 +96,7 @@ L'app tourne sur `http://localhost:3000`
 ## Flux utilisateur intégré
 
 ### 1. **Register / Login**
+
 - L'utilisateur entre email/password
 - Appel API `POST /api/users/register`
 - Backend crée ou valide l'utilisateur en DB
@@ -98,10 +104,12 @@ L'app tourne sur `http://localhost:3000`
 - Redirection vers le board
 
 ### 2. **Voir le Board**
+
 - Frontend récupère le board depuis `/api/boards/{boardId}`
 - Les 25 activités sont affichées avec symbole `Open`
 
 ### 3. **Compléter une activité**
+
 - L'utilisateur clique sur une case
 - Frontend appelle `POST /api/submissions` avec:
   - `user_id` (depuis localStorage)
@@ -113,36 +121,43 @@ L'app tourne sur `http://localhost:3000`
 - Compteur `/25 complete` se met à jour
 
 ### 4. **Persistance en DB**
+
 - Toute action (toggle, submit, register) persiste en PostgreSQL
 - Les données restent même après refresh ou logout/login
 
 ## Endpoints API disponibles
 
 ### Users
+
 - `POST /api/users/register` - Créer un utilisateur
 - `GET /api/users/{user_id}` - Récupérer un utilisateur
 - `GET /api/users` - Lister tous les utilisateurs
 
 ### Boards
+
 - `GET /api/boards` - Lister les boards
 - `GET /api/boards/{board_id}` - Récupérer un board avec ses activités
 - `POST /api/boards` - Créer un board (25 activités)
 
 ### Activities
+
 - `GET /api/activities` - Lister les activités
 - `POST /api/activites` - Créer une activité
 
 ### Submissions
+
 - `POST /api/submissions` - Soumettre une preuve pour une activité
 - `GET /api/submissions?user_id=...` - Récupérer les soumissions d'un user
 
 ### Leaderboard
-- `GET /api/leaderboard/top` - Top utilisateurs par points
+
+- `GET /api/leaderboard/top` - Top utilisateurs par activités complétées
 - `GET /api/users/{user_id}/stats` - Stats de l'utilisateur
 
 ## Variables d'environnement
 
 ### Frontend (`.env.local`)
+
 ```
 NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api
 NEXT_PUBLIC_SUPABASE_URL=(optionnel)
@@ -150,6 +165,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=(optionnel)
 ```
 
 ### Backend (`.env`)
+
 ```
 DATABASE_URL=postgresql://user:password@localhost/bingo_db
 # Ou pour Supabase:
@@ -159,18 +175,22 @@ DATABASE_URL=postgresql://user:password@localhost/bingo_db
 ## Dépannage
 
 ### "Connection refused" backend
+
 - Vérifier que FastAPI tourne: `http://localhost:8000/health`
 - Vérifier DATABASE_URL en `.env` backend
 
 ### "CORS error" au login
+
 - S'assurer que le backend a CORS activé (activé par défaut dans main.py)
 - Vérifier que le Frontend appelle `http://localhost:8000/api`
 
 ### "Database connection error"
+
 - Vérifier la connexion PostgreSQL/Supabase
 - Vérifier que les tables existent (migrations appliquées)
 
 ### Tables n'existent pas
+
 - Les tables doivent être créées une fois via Supabase ou PostgreSQL
 - Voir `backend/database_migration.sql` pour le schéma
 
@@ -185,6 +205,7 @@ DATABASE_URL=postgresql://user:password@localhost/bingo_db
 ## Contacts et questions
 
 L'app est prête pour le développement. Commencer par:
+
 1. Lancer `npm run dev` (frontend)
 2. Lancer `uvicorn app.main:app --reload` (backend)
-3. Naviguer vers  `http://localhost:3000`
+3. Naviguer vers `http://localhost:3000`

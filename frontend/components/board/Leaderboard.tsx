@@ -32,31 +32,30 @@ export default function Leaderboard() {
           <p className="eyebrow">GLOW BINGO</p>
           <h2>Leaderboard</h2>
         </div>
-        {!loading && <div className="progress-pill">{entries.length} interns</div>}
+        {!loading && (
+          <div className="progress-pill">{entries.length} interns</div>
+        )}
       </div>
 
       {loading ? (
         <LoadingSpinner message="Loading leaderboard…" size="md" />
       ) : entries.length === 0 ? (
-        <p
-          style={{
-            textAlign: "center",
-            padding: "32px 0",
-            color: "var(--muted)",
-          }}
-        >
-          No submissions yet — be the first!
-        </p>
+        <p className="leaderboard-empty">No submissions yet — be the first!</p>
       ) : (
         <>
           {/* Top 3 Podium */}
           <div className="podium">
             {entries.slice(0, 3).map((entry) => {
-              const pct = Math.round((entry.completed_activities / TOTAL) * 100);
+              const pct = Math.round(
+                (entry.completed_activities / TOTAL) * 100,
+              );
               const isMe = entry.user_id === user?.id;
               const displayName = entry.name || "Anonymous";
               return (
-                <div key={entry.user_id} className={`podium-card podium-${entry.rank}${isMe ? " is-me" : ""}`}>
+                <div
+                  key={entry.user_id}
+                  className={`podium-card podium-${entry.rank}${isMe ? " is-me" : ""}`}
+                >
                   <span className="podium-medal">{MEDAL[entry.rank]}</span>
                   <p className="podium-name">
                     {displayName}
@@ -73,10 +72,12 @@ export default function Leaderboard() {
             })}
           </div>
 
-          {/* Full Ranking List */}
+          {/* Full Ranking List (skip top-3 already shown in podium) */}
           <div className="lb-list">
-            {entries.map((entry) => {
-              const pct = Math.round((entry.completed_activities / TOTAL) * 100);
+            {entries.slice(3).map((entry) => {
+              const pct = Math.round(
+                (entry.completed_activities / TOTAL) * 100,
+              );
               const isMe = entry.user_id === user?.id;
               const displayName = entry.name || "Anonymous";
               return (

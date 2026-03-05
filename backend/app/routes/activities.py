@@ -1,9 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlmodel import Session, select
+from sqlmodel import Session, select, col
+from sqlalchemy import text as sa_text
 from app.models.activity import (
     Activity, ActivityCreate, ActivityResponse,
     Submission, SubmissionCreate, SubmissionResponse
 )
+from app.models.user import Profile
 from app.db.connection import get_session
 import uuid as uuid_pkg
 from typing import List, Optional
@@ -16,7 +18,6 @@ router = APIRouter()
 class ActivityUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
-    points: Optional[int] = None
 
 
 # ============= ACTIVITY ROUTES =============
@@ -34,24 +35,28 @@ class ActivityUpdate(BaseModel):
     response_description="Ordered list of up to 25 unique activities",
 )
 def get_activities(session: Session = Depends(get_session)):
-    statement = select(Activity).order_by(Activity.created_at.desc())
-    all_activities = session.exec(statement).all()
-
-    seen_indexes: set[int] = set()
-    unique_activities: list[Activity] = []
-
-    for activity in all_activities:
-        if activity.index is None:
-            continue
-        if activity.index in seen_indexes:
-            continue
-        seen_indexes.add(activity.index)
-        unique_activities.append(activity)
-        if len(unique_activities) == 25:
-            break
-
-    unique_activities.sort(key=lambda a: a.index)
-    return unique_activities
+    # Use PostgreSQL DISTINCT ON to do the deduplication in SQL
+    # instead of fetching all rows and filtering in Python
+    statement = sa_text(
+        "SELECT DISTINCT ON (index) id, created_at, title, description, "
+        '"isImageRequired", index '
+        "FROM activities "
+        "WHERE index IS NOT NULL "
+        "ORDER BY index ASC, created_at DESC "
+        "LIMIT 25"
+    )
+    rows = session.exec(statement).all()
+    return [
+        ActivityResponse(
+            id=row.id,
+            created_at=row.created_at,
+            title=row.title,
+            description=row.description,
+            isImageRequired=row.isImageRequired,
+            index=row.index,
+        )
+        for row in rows
+    ]
 
 
 @router.get(
@@ -99,7 +104,6 @@ def get_activity(activity_id: uuid_pkg.UUID, session: Session = Depends(get_sess
 )
 def create_submission(submission_data: SubmissionCreate, session: Session = Depends(get_session)):
     # Verify user exists
-    from app.models.user import Profile
     user = session.get(Profile, submission_data.user_id)
     if not user:
         raise HTTPException(
@@ -138,12 +142,22 @@ def create_submission(submission_data: SubmissionCreate, session: Session = Depe
     "/submissions/user/{user_id}",
     response_model=List[SubmissionResponse],
     summary="Get submissions by user",
-    description="Returns all activity submissions made by the specified user.",
+    description="Returns activity submissions made by the specified user.",
     response_description="List of submissions for the user",
 )
-def get_user_submissions(user_id: uuid_pkg.UUID, session: Session = Depends(get_session)):
-    """Get all submissions for a specific user"""
-    statement = select(Submission).where(Submission.user_id == user_id)
+def get_user_submissions(
+    user_id: uuid_pkg.UUID,
+    skip: int = 0,
+    limit: int = 100,
+    session: Session = Depends(get_session),
+):
+    """Get submissions for a specific user (paginated)"""
+    statement = (
+        select(Submission)
+        .where(Submission.user_id == user_id)
+        .offset(skip)
+        .limit(limit)
+    )
     submissions = session.exec(statement).all()
     return submissions
 
@@ -152,12 +166,22 @@ def get_user_submissions(user_id: uuid_pkg.UUID, session: Session = Depends(get_
     "/submissions/activity/{activity_id}",
     response_model=List[SubmissionResponse],
     summary="Get submissions by activity",
-    description="Returns all user submissions for the specified activity.",
+    description="Returns user submissions for the specified activity.",
     response_description="List of submissions for the activity",
 )
-def get_activity_submissions(activity_id: uuid_pkg.UUID, session: Session = Depends(get_session)):
-    """Get all submissions for a specific activity"""
-    statement = select(Submission).where(Submission.activity_id == activity_id)
+def get_activity_submissions(
+    activity_id: uuid_pkg.UUID,
+    skip: int = 0,
+    limit: int = 100,
+    session: Session = Depends(get_session),
+):
+    """Get submissions for a specific activity (paginated)"""
+    statement = (
+        select(Submission)
+        .where(Submission.activity_id == activity_id)
+        .offset(skip)
+        .limit(limit)
+    )
     submissions = session.exec(statement).all()
     return submissions
 
