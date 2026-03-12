@@ -36,7 +36,6 @@ def sync_user_profile(user_data: UserSync, session: Session = Depends(get_sessio
             existing_by_id.name = user_data.name
             changed = True
         if changed:
-            session.add(existing_by_id)
             session.commit()
             session.refresh(existing_by_id)
         return existing_by_id
@@ -50,11 +49,36 @@ def sync_user_profile(user_data: UserSync, session: Session = Depends(get_sessio
             detail="Email already exists for another profile",
         )
 
+    if user_data.name is not None:
+        existing_by_name = session.exec(
+            select(Profile).where(Profile.name == user_data.name)
+        ).first()
+        if existing_by_name and existing_by_name.id != user_data.id:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Name already taken",
+            )
+
     new_profile = Profile(id=user_data.id, email=user_data.email, name=user_data.name)
     session.add(new_profile)
     session.commit()
     session.refresh(new_profile)
     return new_profile
+
+
+@router.get(
+    "/users/check-name",
+    summary="Check name availability",
+    description="Returns whether the given display name is available (not yet used by any profile).",
+    responses={
+        200: {"description": "Availability status"},
+    },
+)
+def check_name_availability(name: str, session: Session = Depends(get_session)):
+    existing = session.exec(
+        select(Profile).where(Profile.name == name)
+    ).first()
+    return {"available": existing is None}
 
 
 @router.get(
@@ -82,11 +106,15 @@ def get_user(user_id: uuid_pkg.UUID, session: Session = Depends(get_session)):
 @router.get(
     "/users",
     response_model=list[UserResponse],
-    summary="List all users",
-    description="Returns every user profile stored in the database.",
+    summary="List users",
+    description="Returns user profiles with pagination support.",
     response_description="Array of user profiles",
 )
-def list_users(session: Session = Depends(get_session)):
-    """List all users"""
-    users = session.exec(select(Profile)).all()
+def list_users(
+    skip: int = 0,
+    limit: int = 50,
+    session: Session = Depends(get_session),
+):
+    """List users (paginated)"""
+    users = session.exec(select(Profile).offset(skip).limit(limit)).all()
     return users

@@ -48,6 +48,14 @@ CREATE INDEX IF NOT EXISTS idx_user_progress_board ON user_board_progress(board_
 CREATE INDEX IF NOT EXISTS idx_user_progress_user_board ON user_board_progress(user_id, board_id);
 CREATE INDEX IF NOT EXISTS idx_submissions_user_activity ON submissions(user_id, activity_id);
 
+-- Performance indexes for activities table
+CREATE INDEX IF NOT EXISTS idx_activities_index ON activities(index) WHERE index IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_activities_created_at ON activities(created_at DESC);
+-- Single-column index on activity_id for submission lookups by activity
+CREATE INDEX IF NOT EXISTS idx_submissions_activity_id ON submissions(activity_id);
+-- Unique constraint to prevent duplicate submissions (race condition guard)
+ALTER TABLE submissions ADD CONSTRAINT IF NOT EXISTS uq_submission_user_activity
+    UNIQUE (user_id, activity_id);
 -- Drop status column if it exists (no longer used)
 ALTER TABLE submissions DROP COLUMN IF EXISTS status;
 

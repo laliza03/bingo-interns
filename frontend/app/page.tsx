@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/dist/client/components/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useAuth } from "../lib/hooks";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
@@ -10,7 +10,8 @@ export default function HomePage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (loading) return;
+    if (!user) {
       router.replace("/login");
     } else {
       router.replace("/board");
