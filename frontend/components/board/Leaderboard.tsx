@@ -13,7 +13,7 @@ const RANK_CLASS: Record<number, string> = {
 
 export default function Leaderboard() {
   const { user } = useAuth();
-  const { entries, loading, refetch } = useLeaderboard(5);
+  const { entries, totalInterns, loading, refetch } = useLeaderboard(10);
 
   // Auto-refresh when a submission is completed on the board
   useEffect(() => {
@@ -32,9 +32,7 @@ export default function Leaderboard() {
           <p className="eyebrow">GLOW BINGO</p>
           <h2>Leaderboard</h2>
         </div>
-        {!loading && (
-          <div className="progress-pill">{entries.length} interns</div>
-        )}
+        {!loading && <div className="progress-pill">{totalInterns} interns</div>}
       </div>
 
       {loading ? (
