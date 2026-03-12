@@ -49,11 +49,36 @@ def sync_user_profile(user_data: UserSync, session: Session = Depends(get_sessio
             detail="Email already exists for another profile",
         )
 
+    if user_data.name is not None:
+        existing_by_name = session.exec(
+            select(Profile).where(Profile.name == user_data.name)
+        ).first()
+        if existing_by_name and existing_by_name.id != user_data.id:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Name already taken",
+            )
+
     new_profile = Profile(id=user_data.id, email=user_data.email, name=user_data.name)
     session.add(new_profile)
     session.commit()
     session.refresh(new_profile)
     return new_profile
+
+
+@router.get(
+    "/users/check-name",
+    summary="Check name availability",
+    description="Returns whether the given display name is available (not yet used by any profile).",
+    responses={
+        200: {"description": "Availability status"},
+    },
+)
+def check_name_availability(name: str, session: Session = Depends(get_session)):
+    existing = session.exec(
+        select(Profile).where(Profile.name == name)
+    ).first()
+    return {"available": existing is None}
 
 
 @router.get(

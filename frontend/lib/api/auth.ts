@@ -42,8 +42,27 @@ async function syncProfileToBackend(user: User): Promise<void> {
   }
 }
 
-export async function registerUser(email: string, password: string, name?: string): Promise<User> {
+export async function registerUser(
+  email: string,
+  password: string,
+  name?: string,
+): Promise<User> {
   const client = requireClient();
+
+  if (name) {
+    const checkRes = await fetch(
+      `${API_BASE_URL}/api/users/check-name?name=${encodeURIComponent(name)}`,
+    );
+    if (checkRes.ok) {
+      const { available } = await checkRes.json();
+      if (!available) {
+        throw new Error(
+          "This name is already taken. Please choose a different name.",
+        );
+      }
+    }
+  }
+
   const { data, error } = await client.auth.signUp({
     email,
     password,
@@ -61,7 +80,10 @@ export async function registerUser(email: string, password: string, name?: strin
   return user;
 }
 
-export async function loginUser(email: string, password: string): Promise<User> {
+export async function loginUser(
+  email: string,
+  password: string,
+): Promise<User> {
   const client = requireClient();
   const { data, error } = await client.auth.signInWithPassword({
     email,
